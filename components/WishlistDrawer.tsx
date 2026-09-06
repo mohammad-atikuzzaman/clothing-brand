@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { X, Trash2, Heart, ShoppingBag } from "lucide-react";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useCartStore } from "@/store/useCartStore";
@@ -121,6 +122,18 @@ export const WishlistDrawer: React.FC = () => {
               ))
             )}
           </div>
+
+          {items.length > 0 && (
+            <div className="border-t border-neutral-200 p-4 bg-neutral-50">
+              <Link
+                href="/wishlist"
+                onClick={closeWishlist}
+                className="w-full block text-center bg-white border border-neutral-300 hover:border-neutral-900 text-neutral-900 font-bold py-2.5 px-3 text-xs uppercase tracking-wider rounded-xs transition-colors"
+              >
+                View Full Wishlist Page
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

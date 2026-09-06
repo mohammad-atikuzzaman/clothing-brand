@@ -2,20 +2,27 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { X, ShieldCheck, Truck, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { X, ShieldCheck, Truck, RefreshCw, ExternalLink, Ruler } from "lucide-react";
 import { Product } from "@/data/products";
 import { useCartStore } from "@/store/useCartStore";
+import { useUIStore } from "@/store/useUIStore";
+import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface ProductQuickViewModalProps {
-  product: Product | null;
-  onClose: () => void;
+  product?: Product | null;
+  onClose?: () => void;
 }
 
 export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
-  product,
-  onClose,
+  product: propProduct,
+  onClose: propOnClose,
 }) => {
+  const { quickViewProduct, closeQuickView, openSizeGuide } = useUIStore();
+  const product = propProduct !== undefined ? propProduct : quickViewProduct;
+  const onClose = propOnClose !== undefined ? propOnClose : closeQuickView;
+
   const [selectedSize, setSelectedSize] = useState<string>("40");
   const [quantity, setQuantity] = useState<number>(1);
   const { addItem, openCart, openCheckout } = useCartStore();
@@ -51,7 +58,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
       />
 
       {/* Modal Container */}
-      <div className="relative bg-white w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xs shadow-2xl z-10 grid grid-cols-1 md:grid-cols-2">
+      <div className="relative bg-white w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xs shadow-2xl z-10 grid grid-cols-1 md:grid-cols-2 animate-in fade-in zoom-in-95 duration-200">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -90,50 +97,45 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
             {/* Price Row */}
             <div className="mt-3 flex items-center space-x-3">
               <span className="text-sm text-neutral-400 line-through">
-                {product.regularPrice.toLocaleString("en-US")}&nbsp;৳
+                {formatPrice(product.regularPrice)}
               </span>
               <span className="text-2xl font-bold text-neutral-900">
-                {product.salePrice.toLocaleString("en-US")}&nbsp;৳
+                {formatPrice(product.salePrice)}
               </span>
               <span className="text-xs bg-red-100 text-red-700 font-semibold px-2 py-0.5 rounded-xs">
-                Save {(product.regularPrice - product.salePrice).toLocaleString("en-US")} ৳
+                Save {formatPrice(product.regularPrice - product.salePrice)}
               </span>
             </div>
 
-            <p className="text-xs sm:text-sm text-neutral-600 mt-4 leading-relaxed">
+            {/* Brief description */}
+            <p className="mt-3 text-xs text-neutral-600 leading-relaxed line-clamp-3">
               {product.description}
             </p>
-
-            {/* Specifications */}
-            <div className="mt-4 pt-4 border-t border-neutral-100 space-y-1 text-xs text-neutral-600">
-              <p>
-                <strong className="text-neutral-900">Fabric:</strong> {product.fabric}
-              </p>
-              <p>
-                <strong className="text-neutral-900">Fit:</strong> {product.fit}
-              </p>
-              <p>
-                <strong className="text-neutral-900">Payment:</strong> Cash on Delivery (ক্যাশ অন ডেলিভারি)
-              </p>
-            </div>
 
             {/* Size Selector */}
             <div className="mt-5">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                  Select Size (Panjabi)
+                <span className="text-xs font-bold text-neutral-800 uppercase tracking-wider">
+                  Select Size:
                 </span>
-                <span className="text-[11px] text-neutral-500">Regular Standard</span>
+                <button
+                  type="button"
+                  onClick={() => openSizeGuide()}
+                  className="flex items-center gap-1 text-xs text-[#c19b65] hover:underline"
+                >
+                  <Ruler className="w-3.5 h-3.5" />
+                  <span>Size Guide</span>
+                </button>
               </div>
-              <div className="flex gap-2.5">
+              <div className="flex flex-wrap gap-2">
                 {product.sizes.map((size) => (
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
-                    className={`w-11 h-10 border rounded-xs text-xs font-bold transition-all ${
+                    className={`min-w-[42px] h-10 px-3 border text-xs font-semibold rounded-xs transition-all ${
                       selectedSize === size
-                        ? "border-[#161616] bg-[#161616] text-white shadow-sm"
-                        : "border-neutral-300 bg-white text-neutral-800 hover:border-neutral-900"
+                        ? "border-[#161616] bg-[#161616] text-white"
+                        : "border-neutral-300 text-neutral-700 hover:border-neutral-500"
                     }`}
                   >
                     {size}
@@ -142,24 +144,22 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
               </div>
             </div>
 
-            {/* Quantity */}
+            {/* Quantity Stepper */}
             <div className="mt-5 flex items-center space-x-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+              <span className="text-xs font-bold text-neutral-800 uppercase tracking-wider">
                 Quantity:
               </span>
               <div className="flex items-center border border-neutral-300 rounded-xs">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-3 py-1 text-sm font-bold text-neutral-600 hover:bg-neutral-100"
+                  className="w-8 h-8 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 font-bold"
                 >
                   -
                 </button>
-                <span className="px-3 py-1 text-xs font-semibold text-neutral-900 min-w-[28px] text-center">
-                  {quantity}
-                </span>
+                <span className="w-10 text-center text-xs font-semibold">{quantity}</span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="px-3 py-1 text-sm font-bold text-neutral-600 hover:bg-neutral-100"
+                  className="w-8 h-8 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 font-bold"
                 >
                   +
                 </button>
@@ -167,34 +167,43 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="mt-6 pt-5 border-t border-neutral-200 flex flex-col gap-2.5">
+          {/* Action CTAs */}
+          <div className="mt-6 space-y-2.5">
             <button
               onClick={handleAddToCart}
-              className="w-full bg-neutral-900 hover:bg-black text-white py-3 px-4 text-xs font-bold uppercase tracking-wider rounded-xs transition-colors"
+              className="w-full bg-[#161616] hover:bg-neutral-800 text-white py-3 px-4 text-xs font-bold uppercase tracking-wider transition-colors rounded-xs"
             >
-              Add to Bag (Size {selectedSize})
+              Add to Bag
             </button>
             <button
               onClick={handleBuyNowCOD}
-              className="w-full bg-[#c19b65] hover:bg-[#b08b55] text-black font-bold py-3 px-4 text-xs uppercase tracking-wider rounded-xs transition-colors"
+              className="w-full bg-[#c19b65] hover:bg-[#b08b56] text-black py-3 px-4 text-xs font-bold uppercase tracking-wider transition-colors rounded-xs shadow-sm"
             >
-              Buy Now (Cash on Delivery)
+              Cash on Delivery (Buy Now)
             </button>
 
-            {/* Trust badges */}
-            <div className="mt-3 grid grid-cols-3 gap-2 text-[10px] text-neutral-500 text-center pt-2">
+            <Link
+              href={`/product/${product.slug}`}
+              onClick={onClose}
+              className="flex items-center justify-center gap-1.5 w-full py-2 text-xs text-neutral-500 hover:text-neutral-900 transition-colors"
+            >
+              <span>View Full Details & Sizing</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
+
+            {/* Guarantees */}
+            <div className="pt-4 border-t border-neutral-100 grid grid-cols-3 gap-2 text-center text-[10px] text-neutral-500">
               <div className="flex flex-col items-center">
-                <Truck className="w-3.5 h-3.5 mb-1 text-neutral-700" />
-                <span>Fast Nationwide Delivery</span>
+                <ShieldCheck className="w-4 h-4 text-[#c19b65] mb-1" />
+                <span>Original Product</span>
               </div>
               <div className="flex flex-col items-center">
-                <ShieldCheck className="w-3.5 h-3.5 mb-1 text-neutral-700" />
-                <span>100% Original Heritage</span>
+                <Truck className="w-4 h-4 text-[#c19b65] mb-1" />
+                <span>Nationwide COD</span>
               </div>
               <div className="flex flex-col items-center">
-                <RefreshCw className="w-3.5 h-3.5 mb-1 text-neutral-700" />
-                <span>Easy Size Exchange</span>
+                <RefreshCw className="w-4 h-4 text-[#c19b65] mb-1" />
+                <span>7 Days Return</span>
               </div>
             </div>
           </div>

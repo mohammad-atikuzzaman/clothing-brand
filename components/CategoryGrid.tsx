@@ -2,11 +2,12 @@
 
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { CATEGORIES } from "@/data/products";
 
 interface CategoryGridProps {
-  onSelectCategory: (category: string) => void;
-  activeCategory: string;
+  onSelectCategory?: (category: string) => void;
+  activeCategory?: string;
 }
 
 export const CategoryGrid: React.FC<CategoryGridProps> = ({
@@ -16,17 +17,18 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {CATEGORIES.map((category) => {
+        {CATEGORIES.slice(0, 3).map((category) => {
           const isSelected = activeCategory === category.name;
           return (
-            <div
+            <Link
               key={category.id}
-              onClick={() => {
-                onSelectCategory(isSelected ? "All" : category.name);
-                const elem = document.getElementById("products-section");
-                if (elem) elem.scrollIntoView({ behavior: "smooth" });
+              href={`/product-category/${category.slug}`}
+              onClick={(e) => {
+                if (onSelectCategory) {
+                  onSelectCategory(category.name);
+                }
               }}
-              className={`group relative h-64 sm:h-80 overflow-hidden cursor-pointer rounded-xs border transition-all duration-300 ${
+              className={`group relative h-64 sm:h-80 overflow-hidden rounded-xs border transition-all duration-300 block ${
                 isSelected
                   ? "border-[#c19b65] shadow-lg ring-2 ring-[#c19b65]/50"
                   : "border-neutral-200 hover:border-neutral-400"
@@ -53,7 +55,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
                   <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>

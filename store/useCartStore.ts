@@ -8,26 +8,36 @@ export interface CartItem {
   quantity: number;
 }
 
+export type ShippingArea = "inside_dhaka" | "outside_dhaka";
+
 interface CartStore {
   items: CartItem[];
+  shippingArea: ShippingArea;
   isCartOpen: boolean;
   isCheckoutOpen: boolean;
+
   openCart: () => void;
   closeCart: () => void;
   openCheckout: () => void;
   closeCheckout: () => void;
+  setShippingArea: (area: ShippingArea) => void;
+
   addItem: (product: Product, size: string, quantity?: number) => void;
   removeItem: (productId: string, size: string) => void;
   updateQuantity: (productId: string, size: string, quantity: number) => void;
   clearCart: () => void;
+
   getTotalItems: () => number;
   getSubtotal: () => number;
+  getShippingCost: () => number;
+  getTotal: () => number;
 }
 
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      shippingArea: "inside_dhaka",
       isCartOpen: false,
       isCheckoutOpen: false,
 
@@ -35,6 +45,7 @@ export const useCartStore = create<CartStore>()(
       closeCart: () => set({ isCartOpen: false }),
       openCheckout: () => set({ isCheckoutOpen: true, isCartOpen: false }),
       closeCheckout: () => set({ isCheckoutOpen: false }),
+      setShippingArea: (area) => set({ shippingArea: area }),
 
       addItem: (product, size, quantity = 1) => {
         const currentItems = get().items;
@@ -87,11 +98,22 @@ export const useCartStore = create<CartStore>()(
           0
         );
       },
+
+      getShippingCost: () => {
+        if (get().items.length === 0) return 0;
+        return get().shippingArea === "inside_dhaka" ? 70 : 130;
+      },
+
+      getTotal: () => {
+        const subtotal = get().getSubtotal();
+        if (subtotal === 0) return 0;
+        return subtotal + get().getShippingCost();
+      },
     }),
     {
       name: "izhaan-cart-storage",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ items: state.items }),
+      partialize: (state) => ({ items: state.items, shippingArea: state.shippingArea }),
     }
   )
 );

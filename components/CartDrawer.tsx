@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { X, Trash2, ShoppingBag, ArrowRight, Truck } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 
@@ -163,13 +164,23 @@ export const CartDrawer: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                onClick={openCheckout}
-                className="w-full bg-[#161616] hover:bg-black text-white font-bold py-3.5 px-4 text-xs uppercase tracking-widest rounded-xs flex items-center justify-center space-x-2 transition-colors shadow-md"
-              >
-                <span>Proceed to Cash on Delivery</span>
-                <ArrowRight className="w-4 h-4 text-[#c19b65]" />
-              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  href="/cart"
+                  onClick={closeCart}
+                  className="w-full text-center bg-white border border-neutral-300 hover:border-neutral-900 text-neutral-900 font-bold py-3 px-3 text-xs uppercase tracking-wider rounded-xs transition-colors"
+                >
+                  View Cart
+                </Link>
+                <Link
+                  href="/checkout"
+                  onClick={closeCart}
+                  className="w-full text-center bg-[#161616] hover:bg-black text-white font-bold py-3 px-3 text-xs uppercase tracking-wider rounded-xs flex items-center justify-center space-x-1.5 transition-colors shadow-md"
+                >
+                  <span>Checkout</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#c19b65]" />
+                </Link>
+              </div>
 
               <button
                 onClick={closeCart}

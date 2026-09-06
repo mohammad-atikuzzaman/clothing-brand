@@ -2,20 +2,24 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Heart, Eye, Check } from "lucide-react";
+import Link from "next/link";
+import { Heart, Eye } from "lucide-react";
 import { Product } from "@/data/products";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useCartStore } from "@/store/useCartStore";
+import { useUIStore } from "@/store/useUIStore";
+import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface ProductCardProps {
   product: Product;
-  onQuickView: (product: Product) => void;
+  onQuickView?: (product: Product) => void;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
   const { isInWishlist, toggleWishlist } = useWishlistStore();
   const { addItem, openCart } = useCartStore();
+  const { openQuickView } = useUIStore();
 
   const [selectedSize, setSelectedSize] = useState<string>(product.sizes[0] || "40");
   const [showSizes, setShowSizes] = useState(false);
@@ -23,6 +27,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
   const inWishlist = isInWishlist(product.id);
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     toggleWishlist(product);
     if (!inWishlist) {
@@ -32,7 +37,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
     }
   };
 
+  const triggerQuickView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onQuickView) {
+      onQuickView(product);
+    } else {
+      openQuickView(product);
+    }
+  };
+
   const handleQuickAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     if (!showSizes && product.sizes.length > 1) {
       setShowSizes(true);
@@ -51,21 +67,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
   return (
     <div className="group flex flex-col bg-white border border-neutral-100 hover:border-neutral-300 transition-all duration-300 rounded-xs overflow-hidden">
       {/* Product Image Box */}
-      <div
-        className="relative w-full aspect-[3/4] bg-neutral-100 overflow-hidden cursor-pointer"
-        onClick={() => onQuickView(product)}
-      >
-        <Image
-          src={product.image}
-          alt={product.name}
-          fill
-          className="object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-        />
+      <div className="relative w-full aspect-[3/4] bg-neutral-100 overflow-hidden">
+        <Link href={`/product/${product.slug}`} className="block w-full h-full relative">
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            className="object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          />
+        </Link>
 
         {/* Discount Badge */}
         {product.discountPercentage > 0 && (
-          <div className="absolute top-3 left-3 bg-[#c19b65] text-white font-bold text-xs w-11 h-11 rounded-full flex items-center justify-center shadow-md">
+          <div className="absolute top-3 left-3 bg-[#c19b65] text-white font-bold text-xs w-11 h-11 rounded-full flex items-center justify-center shadow-md pointer-events-none">
             -{product.discountPercentage}%
           </div>
         )}
@@ -84,10 +99,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
           </button>
 
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onQuickView(product);
-            }}
+            onClick={triggerQuickView}
             className="w-9 h-9 rounded-full bg-white shadow-md flex items-center justify-center text-neutral-700 hover:text-black transition-colors"
             title="Quick View"
             aria-label="Quick View"
@@ -133,23 +145,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
       {/* Product Content Details */}
       <div className="p-4 flex flex-col flex-1 justify-between text-center">
         <div>
-          <span className="text-[10px] font-medium uppercase tracking-widest text-neutral-400">
-            {product.category}
-          </span>
-          <h3
-            onClick={() => onQuickView(product)}
-            className="text-sm font-semibold text-neutral-900 mt-1 hover:text-[#c19b65] cursor-pointer line-clamp-1 transition-colors"
+          <Link
+            href={`/product-category/${product.categorySlug}`}
+            className="text-[10px] font-medium uppercase tracking-widest text-neutral-400 hover:text-[#c19b65] transition-colors"
           >
-            {product.name}
+            {product.category}
+          </Link>
+          <h3 className="text-sm font-semibold text-neutral-900 mt-1 hover:text-[#c19b65] line-clamp-1 transition-colors">
+            <Link href={`/product/${product.slug}`}>{product.name}</Link>
           </h3>
 
           {/* Pricing in BDT */}
           <div className="mt-2 flex items-center justify-center space-x-2">
             <span className="text-xs text-neutral-400 line-through">
-              {product.regularPrice.toLocaleString("en-US")}&nbsp;৳
+              {formatPrice(product.regularPrice)}
             </span>
             <span className="text-sm font-bold text-neutral-900">
-              {product.salePrice.toLocaleString("en-US")}&nbsp;৳
+              {formatPrice(product.salePrice)}
             </span>
           </div>
         </div>
