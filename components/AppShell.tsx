@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { usePathname } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
@@ -17,13 +18,20 @@ interface AppShellProps {
 }
 
 export const AppShell: React.FC<AppShellProps> = ({ children }) => {
+  const pathname = usePathname();
+  const isAdmin = pathname.startsWith("/admin");
+
+  if (isAdmin) {
+    return <div className="min-h-screen bg-[#0f1117]">{children}</div>;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
       {/* Persistent Sticky Header */}
       <Header />
 
       {/* Main Content Area (padding-bottom on mobile for sticky bottom nav) */}
-      <main className="flex-1 pb-16 lg:pb-0">
+      <main className="flex-1 pb-16 md:pb-0">
         {children}
       </main>
 

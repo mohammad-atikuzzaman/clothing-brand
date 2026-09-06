@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { useCartStore } from "@/store/useCartStore";
+import { useAdminStore } from "@/store/useAdminStore";
 import { formatPrice } from "@/lib/utils";
 import {
   ShieldCheck,
@@ -89,6 +90,30 @@ export default function CheckoutPage() {
     const generatedOrderId = `IZH-${Math.floor(100000 + Math.random() * 900000)}`;
 
     setTimeout(() => {
+      // Save order to Admin Store
+      useAdminStore.getState().addOrder({
+        id: generatedOrderId,
+        customerName: fullName,
+        phone: cleanPhone,
+        address,
+        district,
+        notes: orderNotes,
+        items: items.map((it, index) => ({
+          id: `${it.product.id}-${it.size}-${index}`,
+          productId: it.product.id,
+          name: it.product.name,
+          slug: it.product.slug,
+          image: it.product.image,
+          price: it.product.salePrice,
+          selectedSize: it.size,
+          quantity: it.quantity,
+        })),
+        subtotal,
+        shippingCost,
+        total: grandTotal,
+        paymentMethod,
+      });
+
       setConfirmedOrder({
         orderId: generatedOrderId,
         customerName: fullName,

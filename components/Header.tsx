@@ -30,6 +30,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onSelectCategory }) => {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileShopExpanded, setMobileShopExpanded] = useState(true);
 
@@ -39,6 +40,19 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onSelectCategory }
 
   useEffect(() => {
     setMounted(true);
+
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Close mobile drawer on route change
@@ -70,34 +84,56 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onSelectCategory }
   return (
     <>
       {/* Main Sticky Navbar */}
-      <header className="sticky top-0 z-40 w-full bg-[#161616] text-white border-b border-neutral-800 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            {/* Mobile Menu Trigger */}
-            <div className="flex items-center lg:hidden">
+      <header
+        className={`sticky top-0 z-40 w-full text-white border-b transition-all duration-300 ease-in-out ${
+          isScrolled
+            ? "bg-[#161616]/95 backdrop-blur-md border-neutral-800/90 shadow-lg shadow-black/25"
+            : "bg-[#161616] border-neutral-800/80 shadow-md"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div
+            className={`relative flex items-center justify-between transition-all duration-300 ease-in-out ${
+              isScrolled ? "h-14 sm:h-16" : "h-16 sm:h-20"
+            }`}
+          >
+            {/* Left: Mobile Menu Trigger (Mobile only < md) */}
+            <div className="flex items-center md:hidden z-10">
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="p-2 text-neutral-300 hover:text-white focus:outline-none"
+                className="w-10 h-10 -ml-1.5 flex items-center justify-center text-neutral-300 hover:text-white active:scale-95 rounded-md hover:bg-neutral-800/60 focus:outline-none transition-all"
                 aria-label="Open Mobile Menu"
               >
                 <Menu className="w-6 h-6" />
               </button>
             </div>
 
-            {/* Brand Logo */}
-            <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="flex flex-col items-start group">
-                <span className="text-2xl sm:text-3xl font-serif tracking-[0.25em] text-white uppercase font-bold group-hover:text-neutral-200 transition-colors">
+            {/* Brand Logo - Perfectly centered on Mobile (< md), Left-aligned on Tablet/Desktop (>= md) */}
+            <div className="flex-shrink-0 flex items-center absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 md:static md:translate-x-0 md:translate-y-0 z-10">
+              <Link href="/" className="flex flex-col items-center md:items-start group select-none">
+                <span
+                  className={`font-serif tracking-[0.2em] sm:tracking-[0.25em] text-white uppercase font-bold group-hover:text-neutral-200 transition-all duration-300 ease-in-out text-center ${
+                    isScrolled
+                      ? "text-lg sm:text-xl lg:text-2xl"
+                      : "text-xl sm:text-2xl lg:text-3xl"
+                  }`}
+                >
                   IZHAAN
                 </span>
-                <span className="text-[9px] tracking-[0.2em] text-[#c19b65] font-light -mt-1 uppercase">
+                <span
+                  className={`tracking-[0.2em] text-[#c19b65] font-light uppercase transition-all duration-300 ease-in-out text-center ${
+                    isScrolled
+                      ? "text-[7px] sm:text-[8px] -mt-0.5 opacity-90"
+                      : "text-[8px] sm:text-[9px] -mt-0.5 sm:-mt-1"
+                  }`}
+                >
                   Lifestyle
                 </span>
               </Link>
             </div>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-9">
+            {/* Desktop / Tablet Navigation (Centered on laptop and desktop screens) */}
+            <nav className="hidden md:flex items-center space-x-5 lg:space-x-8 xl:space-x-10 md:absolute md:left-1/2 md:-translate-x-1/2 md:top-1/2 md:-translate-y-1/2 z-10">
               {/* Home */}
               <Link
                 href="/"
@@ -260,11 +296,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onSelectCategory }
             </nav>
 
             {/* Right Tools (Account, Search, Wishlist, Cart) */}
-            <div className="flex items-center space-x-4 sm:space-x-5">
-              {/* Account / Login */}
+            <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4 xl:space-x-5 z-10 ml-auto">
+              {/* Account / Login (Desktop only) */}
               <button
                 onClick={() => openAuth("login")}
-                className="hidden lg:flex items-center gap-1.5 text-xs text-neutral-300 hover:text-white transition-colors"
+                className="hidden lg:flex items-center gap-1.5 text-xs text-neutral-300 hover:text-white py-1.5 px-2 rounded-sm hover:bg-neutral-800/60 transition-colors"
                 title="Login / Register"
               >
                 <User className="w-4 h-4 text-[#c19b65]" />
@@ -276,23 +312,23 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onSelectCategory }
               {/* Search */}
               <button
                 onClick={handleSearchClick}
-                className="p-1.5 text-neutral-300 hover:text-white transition-colors"
+                className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-neutral-300 hover:text-white rounded-md hover:bg-neutral-800/60 active:scale-95 transition-all"
                 aria-label="Search"
                 title="Search Products"
               >
-                <Search className="w-5 h-5" />
+                <Search className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
               </button>
 
               {/* Wishlist */}
               <Link
                 href="/wishlist"
-                className="relative p-1.5 text-neutral-300 hover:text-white transition-colors"
+                className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-neutral-300 hover:text-white rounded-md hover:bg-neutral-800/60 active:scale-95 transition-all"
                 aria-label="Wishlist"
                 title="Wishlist"
               >
-                <Heart className="w-5 h-5" />
+                <Heart className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#c19b65] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  <span className="absolute top-1 right-1 bg-[#c19b65] text-white text-[9px] sm:text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
                     {wishlistCount}
                   </span>
                 )}
@@ -301,19 +337,19 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onSelectCategory }
               {/* Cart Drawer Trigger */}
               <button
                 onClick={openCart}
-                className="flex items-center space-x-2 py-1.5 px-2.5 rounded-sm hover:bg-neutral-800 transition-colors group"
+                className="flex items-center space-x-1 sm:space-x-2 h-9 sm:h-10 px-2 sm:px-2.5 rounded-sm hover:bg-neutral-800 active:scale-95 transition-all group"
                 aria-label="Cart"
                 title="Shopping Bag"
               >
-                <div className="relative">
-                  <ShoppingBag className="w-5 h-5 text-neutral-200 group-hover:text-white" />
-                  <span className="absolute -top-1.5 -right-2 bg-[#c19b65] text-black font-semibold text-[10px] min-w-[17px] h-[17px] px-1 rounded-full flex items-center justify-center">
+                <div className="relative flex items-center justify-center">
+                  <ShoppingBag className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-neutral-200 group-hover:text-white" />
+                  <span className="absolute -top-1.5 -right-2 bg-[#c19b65] text-black font-semibold text-[9px] sm:text-[10px] min-w-[16px] sm:min-w-[17px] h-[16px] sm:h-[17px] px-1 rounded-full flex items-center justify-center shadow-xs">
                     {totalCartItems}
                   </span>
                 </div>
-                <div className="hidden sm:flex flex-col text-left text-xs leading-tight pl-1">
+                <div className="hidden md:flex flex-col text-left text-xs leading-tight pl-1">
                   <span className="text-[9px] text-neutral-400 uppercase tracking-wider">Bag</span>
-                  <span className="font-semibold text-neutral-200">
+                  <span className="font-semibold text-neutral-200 text-xs">
                     {formatPrice(cartSubtotal)}
                   </span>
                 </div>
@@ -325,13 +361,13 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onSelectCategory }
 
       {/* Mobile Drawer Navigation (Unified, intuitive & no duplicate shop links) */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
+        <div className="fixed inset-0 z-50 flex md:hidden">
           <div
             className="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          <div className="relative w-4/5 max-w-sm bg-[#161616] text-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
+          <div className="relative w-[85vw] max-w-xs sm:max-w-sm bg-[#161616] text-white h-[100dvh] shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
             {/* Drawer Header */}
             <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
               <Link href="/" onClick={() => setMobileMenuOpen(false)}>

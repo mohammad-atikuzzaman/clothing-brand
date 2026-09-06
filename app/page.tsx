@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import { HeroBanner } from "@/components/HeroBanner";
 import { CategoryGrid } from "@/components/CategoryGrid";
@@ -8,25 +8,13 @@ import { ProductCard } from "@/components/ProductCard";
 import { FeaturesStrip } from "@/components/FeaturesStrip";
 import { AboutBrand } from "@/components/AboutBrand";
 import { PRODUCTS, getProductsByCategory } from "@/data/products";
-import { SlidersHorizontal, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 export default function Home() {
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-
-  // Filter products by selected category for the main interactive grid
-  const filteredProducts = useMemo(() => {
-    if (selectedCategory === "All") return PRODUCTS;
-    return PRODUCTS.filter((p) => p.category === selectedCategory);
-  }, [selectedCategory]);
-
-  const categories = [
-    "All",
-    "Signature Line",
-    "Core Classics",
-    "Smart Casuals",
-    "ZAQWAN",
-    "Price 990 - 999",
-  ];
+  const featuredProducts = useMemo(
+    () => PRODUCTS.filter((p) => p.featured).slice(0, 8),
+    []
+  );
 
   const signatureProducts = useMemo(() => getProductsByCategory("Signature Line").slice(0, 4), []);
   const coreClassicProducts = useMemo(() => getProductsByCategory("Core Classics").slice(0, 4), []);
@@ -37,15 +25,12 @@ export default function Home() {
       <HeroBanner />
 
       {/* 3-Category Showcase */}
-      <CategoryGrid
-        onSelectCategory={(cat) => setSelectedCategory(cat)}
-        activeCategory={selectedCategory}
-      />
+      <CategoryGrid />
 
       {/* Main Featured Products Section */}
       <section id="products-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
         {/* Section Heading */}
-        <div className="text-center max-w-2xl mx-auto mb-10">
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
           <span className="text-[11px] font-bold text-[#c19b65] uppercase tracking-[0.25em] block mb-1">
             Izhaan Exclusive Collection
           </span>
@@ -58,35 +43,9 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Category Filter Pills */}
-        <div className="flex items-center justify-center flex-wrap gap-2 sm:gap-3 mb-8">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`text-xs font-semibold uppercase tracking-wider py-2 px-4 rounded-xs transition-all ${
-                selectedCategory === cat
-                  ? "bg-[#161616] text-white shadow-sm"
-                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* Product Count & Filter Bar */}
-        <div className="flex items-center justify-between border-b border-neutral-100 pb-4 mb-6 text-xs text-neutral-500">
-          <span>Showing {filteredProducts.length} items</span>
-          <div className="flex items-center gap-1.5 font-medium text-neutral-700">
-            <SlidersHorizontal className="w-3.5 h-3.5 text-[#c19b65]" />
-            <span>{selectedCategory}</span>
-          </div>
-        </div>
-
         {/* Product Grid: 4 columns on large, 3 on md, 2 on sm */}
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {filteredProducts.map((product) => (
+          {featuredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

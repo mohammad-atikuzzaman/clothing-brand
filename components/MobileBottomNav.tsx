@@ -24,7 +24,7 @@ export const MobileBottomNav: React.FC = () => {
   const wishlistCount = mounted ? wishlistItems.length : 0;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#161616] text-neutral-300 border-t border-neutral-800 lg:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.3)]">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#161616] text-neutral-300 border-t border-neutral-800 md:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.3)]">
       <div className="grid grid-cols-4 h-15">
         {/* Shop */}
         <Link

@@ -30,9 +30,11 @@ export default function RootLayout({
   return (
     <html
       lang="bn"
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased scroll-smooth`}
     >
-      <body className="min-h-full flex flex-col bg-white text-neutral-900">
+      <body suppressHydrationWarning className="min-h-full flex flex-col bg-white text-neutral-900">
         <AppShell>{children}</AppShell>
         <Toaster richColors position="top-right" />
       </body>
