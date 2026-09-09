@@ -22,6 +22,7 @@ import { useWishlistStore } from "@/store/useWishlistStore";
 import { useUIStore } from "@/store/useUIStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { formatPrice } from "@/lib/utils";
+import { getCategories, SerializedCategory } from "@/actions/category";
 
 interface HeaderProps {
   onOpenSearch?: () => void;
@@ -34,6 +35,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onSelectCategory }
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileShopExpanded, setMobileShopExpanded] = useState(true);
+  const [categories, setCategories] = useState<SerializedCategory[]>([]);
 
   const { user, fetchUser } = useAuthStore();
   const { getTotalItems, getSubtotal, openCart } = useCartStore();
@@ -43,6 +45,13 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onSelectCategory }
   useEffect(() => {
     setMounted(true);
     fetchUser(); // Instant cached check! Zero network requests on subsequent navigations.
+    getCategories()
+      .then((cats) => {
+        if (Array.isArray(cats) && cats.length > 0) {
+          setCategories(cats);
+        }
+      })
+      .catch(() => {});
 
     const handleScroll = () => {
       if (window.scrollY > 20) {
@@ -190,72 +199,106 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onSelectCategory }
 
                     {/* Specific Categories */}
                     <div className="py-2.5 space-y-1">
-                      <Link
-                        href="/product-category/signature-line"
-                        className="flex items-center justify-between px-3 py-2 text-xs uppercase tracking-wider text-neutral-200 hover:bg-neutral-800 hover:text-[#c19b65] rounded-xs transition-colors group/item"
-                      >
-                        <div>
-                          <span className="font-medium">Signature Line</span>
-                          <span className="block text-[10px] text-neutral-400 lowercase first-letter:uppercase tracking-normal">
-                            Luxury combed cotton jacquard
-                          </span>
-                        </div>
-                        <span className="text-[9px] bg-[#c19b65]/20 text-[#c19b65] px-1.5 py-0.5 rounded-xs font-bold">
-                          Exclusive
-                        </span>
-                      </Link>
+                      {categories.length > 0 ? (
+                        categories.map((cat) => (
+                          <Link
+                            key={cat.id}
+                            href={`/product-category/${cat.slug}`}
+                            className="flex items-center justify-between px-3 py-2 text-xs uppercase tracking-wider text-neutral-200 hover:bg-neutral-800 hover:text-[#c19b65] rounded-xs transition-colors group/item"
+                          >
+                            <div>
+                              <span className="font-medium">{cat.name}</span>
+                              {cat.tagline && (
+                                <span className="block text-[10px] text-neutral-400 lowercase first-letter:uppercase tracking-normal">
+                                  {cat.tagline}
+                                </span>
+                              )}
+                            </div>
+                            {cat.slug === "signature-line" && (
+                              <span className="text-[9px] bg-[#c19b65]/20 text-[#c19b65] px-1.5 py-0.5 rounded-xs font-bold">
+                                Exclusive
+                              </span>
+                            )}
+                            {cat.slug === "zaqwan" && (
+                              <span className="text-[9px] bg-neutral-800 text-[#c19b65] px-1.5 py-0.5 rounded-xs font-bold">
+                                Premium
+                              </span>
+                            )}
+                            {cat.slug.includes("990") && (
+                              <Sparkles className="w-3.5 h-3.5 text-[#c19b65]" />
+                            )}
+                          </Link>
+                        ))
+                      ) : (
+                        <>
+                          <Link
+                            href="/product-category/signature-line"
+                            className="flex items-center justify-between px-3 py-2 text-xs uppercase tracking-wider text-neutral-200 hover:bg-neutral-800 hover:text-[#c19b65] rounded-xs transition-colors group/item"
+                          >
+                            <div>
+                              <span className="font-medium">Signature Line</span>
+                              <span className="block text-[10px] text-neutral-400 lowercase first-letter:uppercase tracking-normal">
+                                Luxury combed cotton jacquard
+                              </span>
+                            </div>
+                            <span className="text-[9px] bg-[#c19b65]/20 text-[#c19b65] px-1.5 py-0.5 rounded-xs font-bold">
+                              Exclusive
+                            </span>
+                          </Link>
 
-                      <Link
-                        href="/product-category/core-classics"
-                        className="flex items-center justify-between px-3 py-2 text-xs uppercase tracking-wider text-neutral-200 hover:bg-neutral-800 hover:text-[#c19b65] rounded-xs transition-colors"
-                      >
-                        <div>
-                          <span className="font-medium">Core Classics</span>
-                          <span className="block text-[10px] text-neutral-400 lowercase first-letter:uppercase tracking-normal">
-                            Everyday minimalist elegance
-                          </span>
-                        </div>
-                      </Link>
+                          <Link
+                            href="/product-category/core-classics"
+                            className="flex items-center justify-between px-3 py-2 text-xs uppercase tracking-wider text-neutral-200 hover:bg-neutral-800 hover:text-[#c19b65] rounded-xs transition-colors"
+                          >
+                            <div>
+                              <span className="font-medium">Core Classics</span>
+                              <span className="block text-[10px] text-neutral-400 lowercase first-letter:uppercase tracking-normal">
+                                Everyday minimalist elegance
+                              </span>
+                            </div>
+                          </Link>
 
-                      <Link
-                        href="/product-category/smart-casuals"
-                        className="flex items-center justify-between px-3 py-2 text-xs uppercase tracking-wider text-neutral-200 hover:bg-neutral-800 hover:text-[#c19b65] rounded-xs transition-colors"
-                      >
-                        <div>
-                          <span className="font-medium">Smart Casuals</span>
-                          <span className="block text-[10px] text-neutral-400 lowercase first-letter:uppercase tracking-normal">
-                            Modern contemporary fits
-                          </span>
-                        </div>
-                      </Link>
+                          <Link
+                            href="/product-category/smart-casuals"
+                            className="flex items-center justify-between px-3 py-2 text-xs uppercase tracking-wider text-neutral-200 hover:bg-neutral-800 hover:text-[#c19b65] rounded-xs transition-colors"
+                          >
+                            <div>
+                              <span className="font-medium">Smart Casuals</span>
+                              <span className="block text-[10px] text-neutral-400 lowercase first-letter:uppercase tracking-normal">
+                                Modern contemporary fits
+                              </span>
+                            </div>
+                          </Link>
 
-                      <Link
-                        href="/product-category/zaqwan"
-                        className="flex items-center justify-between px-3 py-2 text-xs uppercase tracking-wider text-neutral-200 hover:bg-neutral-800 hover:text-[#c19b65] rounded-xs transition-colors"
-                      >
-                        <div>
-                          <span className="font-medium">ZAQWAN Royal Edition</span>
-                          <span className="block text-[10px] text-neutral-400 lowercase first-letter:uppercase tracking-normal">
-                            Festive embroidered masterpieces
-                          </span>
-                        </div>
-                        <span className="text-[9px] bg-neutral-800 text-[#c19b65] px-1.5 py-0.5 rounded-xs font-bold">
-                          Premium
-                        </span>
-                      </Link>
+                          <Link
+                            href="/product-category/zaqwan"
+                            className="flex items-center justify-between px-3 py-2 text-xs uppercase tracking-wider text-neutral-200 hover:bg-neutral-800 hover:text-[#c19b65] rounded-xs transition-colors"
+                          >
+                            <div>
+                              <span className="font-medium">ZAQWAN Royal Edition</span>
+                              <span className="block text-[10px] text-neutral-400 lowercase first-letter:uppercase tracking-normal">
+                                Festive embroidered masterpieces
+                              </span>
+                            </div>
+                            <span className="text-[9px] bg-neutral-800 text-[#c19b65] px-1.5 py-0.5 rounded-xs font-bold">
+                              Premium
+                            </span>
+                          </Link>
 
-                      <Link
-                        href="/product-category/price-990-999"
-                        className="flex items-center justify-between px-3 py-2 text-xs uppercase tracking-wider text-[#c19b65] hover:bg-neutral-800 rounded-xs transition-colors font-semibold"
-                      >
-                        <div>
-                          <span>Special ৳990 - ৳999</span>
-                          <span className="block text-[10px] text-neutral-400 lowercase first-letter:uppercase tracking-normal font-normal">
-                            Limited flash sale stock
-                          </span>
-                        </div>
-                        <Sparkles className="w-3.5 h-3.5 text-[#c19b65]" />
-                      </Link>
+                          <Link
+                            href="/product-category/price-990-999"
+                            className="flex items-center justify-between px-3 py-2 text-xs uppercase tracking-wider text-[#c19b65] hover:bg-neutral-800 rounded-xs transition-colors font-semibold"
+                          >
+                            <div>
+                              <span>Special ৳990 - ৳999</span>
+                              <span className="block text-[10px] text-neutral-400 lowercase first-letter:uppercase tracking-normal font-normal">
+                                Limited flash sale stock
+                              </span>
+                            </div>
+                            <Sparkles className="w-3.5 h-3.5 text-[#c19b65]" />
+                          </Link>
+                        </>
+                      )}
                     </div>
 
                     {/* Quality Assurance Strip */}
@@ -459,41 +502,60 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onSelectCategory }
                     >
                       • All Collections
                     </Link>
-                    <Link
-                      href="/product-category/signature-line"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block py-1.5 px-2 text-xs text-neutral-300 hover:text-[#c19b65] transition-colors uppercase tracking-wider"
-                    >
-                      • Signature Line (Exclusive)
-                    </Link>
-                    <Link
-                      href="/product-category/core-classics"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block py-1.5 px-2 text-xs text-neutral-300 hover:text-[#c19b65] transition-colors uppercase tracking-wider"
-                    >
-                      • Core Classics
-                    </Link>
-                    <Link
-                      href="/product-category/smart-casuals"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block py-1.5 px-2 text-xs text-neutral-300 hover:text-[#c19b65] transition-colors uppercase tracking-wider"
-                    >
-                      • Smart Casuals
-                    </Link>
-                    <Link
-                      href="/product-category/zaqwan"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block py-1.5 px-2 text-xs text-neutral-300 hover:text-[#c19b65] transition-colors uppercase tracking-wider"
-                    >
-                      • ZAQWAN Royal Edition
-                    </Link>
-                    <Link
-                      href="/product-category/price-990-999"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block py-1.5 px-2 text-xs text-[#c19b65] hover:underline transition-colors uppercase tracking-wider font-semibold"
-                    >
-                      • Special ৳990 - ৳999
-                    </Link>
+                    {categories.length > 0 ? (
+                      categories.map((cat) => (
+                        <Link
+                          key={cat.id}
+                          href={`/product-category/${cat.slug}`}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`block py-1.5 px-2 text-xs transition-colors uppercase tracking-wider ${
+                            cat.slug.includes("990")
+                              ? "text-[#c19b65] hover:underline font-semibold"
+                              : "text-neutral-300 hover:text-[#c19b65]"
+                          }`}
+                        >
+                          • {cat.name}
+                        </Link>
+                      ))
+                    ) : (
+                      <>
+                        <Link
+                          href="/product-category/signature-line"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="block py-1.5 px-2 text-xs text-neutral-300 hover:text-[#c19b65] transition-colors uppercase tracking-wider"
+                        >
+                          • Signature Line (Exclusive)
+                        </Link>
+                        <Link
+                          href="/product-category/core-classics"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="block py-1.5 px-2 text-xs text-neutral-300 hover:text-[#c19b65] transition-colors uppercase tracking-wider"
+                        >
+                          • Core Classics
+                        </Link>
+                        <Link
+                          href="/product-category/smart-casuals"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="block py-1.5 px-2 text-xs text-neutral-300 hover:text-[#c19b65] transition-colors uppercase tracking-wider"
+                        >
+                          • Smart Casuals
+                        </Link>
+                        <Link
+                          href="/product-category/zaqwan"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="block py-1.5 px-2 text-xs text-neutral-300 hover:text-[#c19b65] transition-colors uppercase tracking-wider"
+                        >
+                          • ZAQWAN Royal Edition
+                        </Link>
+                        <Link
+                          href="/product-category/price-990-999"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="block py-1.5 px-2 text-xs text-[#c19b65] hover:underline transition-colors uppercase tracking-wider font-semibold"
+                        >
+                          • Special ৳990 - ৳999
+                        </Link>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

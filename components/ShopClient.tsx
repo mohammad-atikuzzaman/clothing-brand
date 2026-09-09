@@ -8,13 +8,15 @@ import { ProductCard } from "@/components/ProductCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { SerializedProduct } from "@/actions/product";
 import { formatPrice } from "@/lib/utils";
+import { SerializedCategory } from "@/actions/category";
 import { SlidersHorizontal, ArrowUpDown, X, Star, Filter } from "lucide-react";
 
 interface ShopClientProps {
   initialProducts: SerializedProduct[];
+  categories?: SerializedCategory[];
 }
 
-function ShopInner({ initialProducts }: ShopClientProps) {
+function ShopInner({ initialProducts, categories }: ShopClientProps) {
   const searchParams = useSearchParams();
   const initialCat = searchParams.get("category") || "All";
 
@@ -31,18 +33,24 @@ function ShopInner({ initialProducts }: ShopClientProps) {
     if (cat) setSelectedCategory(cat);
   }, [searchParams]);
 
-  const categories = [
-    "All",
-    "Signature Line",
-    "Core Classics",
-    "Smart Casuals",
-    "ZAQWAN",
-    "Price 990 - 999",
-  ];
+  const categoryOptions = useMemo(() => {
+    if (categories && categories.length > 0) {
+      return ["All", ...categories.map((c) => c.name)];
+    }
+    return [
+      "All",
+      "Signature Line",
+      "Core Classics",
+      "Smart Casuals",
+      "ZAQWAN",
+      "Price 990 - 999",
+    ];
+  }, [categories]);
 
   // Filtering products in-memory instantly without network hops
   const filteredProducts = useMemo(() => {
     let result = [...products];
+
 
     if (selectedCategory !== "All") {
       result = result.filter(
@@ -109,7 +117,7 @@ function ShopInner({ initialProducts }: ShopClientProps) {
         {/* Category Horizontal Filter Bar */}
         <div className="border-b border-neutral-200 pb-4 mb-8 overflow-x-auto scrollbar-none">
           <div className="flex items-center gap-2 sm:gap-3 min-w-max">
-            {categories.map((cat) => (
+            {categoryOptions.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
@@ -135,7 +143,7 @@ function ShopInner({ initialProducts }: ShopClientProps) {
                 Categories
               </h4>
               <ul className="space-y-2 text-xs">
-                {categories.map((cat) => (
+                {categoryOptions.map((cat) => (
                   <li key={cat}>
                     <button
                       onClick={() => setSelectedCategory(cat)}
@@ -147,7 +155,7 @@ function ShopInner({ initialProducts }: ShopClientProps) {
                     >
                       <span>{cat}</span>
                       <span className="text-[11px] text-neutral-400">
-                        ({cat === "All" ? products.length : products.filter((p) => p.category === cat).length})
+                        ({cat === "All" ? products.length : products.filter((p) => p.category.toLowerCase() === cat.toLowerCase() || p.categorySlug.toLowerCase() === cat.toLowerCase()).length})
                       </span>
                     </button>
                   </li>
@@ -338,7 +346,7 @@ function ShopInner({ initialProducts }: ShopClientProps) {
                   Categories
                 </h4>
                 <div className="space-y-2">
-                  {categories.map((cat) => (
+                  {categoryOptions.map((cat) => (
                     <button
                       key={cat}
                       onClick={() => {
@@ -351,7 +359,7 @@ function ShopInner({ initialProducts }: ShopClientProps) {
                     >
                       <span>{cat}</span>
                       <span className="text-[11px] text-neutral-400">
-                        ({cat === "All" ? products.length : products.filter((p) => p.category === cat).length})
+                        ({cat === "All" ? products.length : products.filter((p) => p.category.toLowerCase() === cat.toLowerCase() || p.categorySlug.toLowerCase() === cat.toLowerCase()).length})
                       </span>
                     </button>
                   ))}
@@ -410,10 +418,10 @@ function ShopInner({ initialProducts }: ShopClientProps) {
   );
 }
 
-export function ShopClient({ initialProducts }: ShopClientProps) {
+export function ShopClient({ initialProducts, categories }: ShopClientProps) {
   return (
     <Suspense fallback={<div className="min-h-screen bg-white" />}>
-      <ShopInner initialProducts={initialProducts} />
+      <ShopInner initialProducts={initialProducts} categories={categories} />
     </Suspense>
   );
 }

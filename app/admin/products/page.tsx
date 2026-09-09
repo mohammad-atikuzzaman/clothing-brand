@@ -24,12 +24,13 @@ import {
   toggleProductFeatured,
   SerializedProduct,
 } from "@/actions/product";
+import { getCategories, SerializedCategory } from "@/actions/category";
 import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
 import { CloudinaryUpload } from "@/components/CloudinaryUpload";
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   "Signature Line",
   "Core Classics",
   "Smart Casuals",
@@ -41,6 +42,7 @@ const AVAILABLE_SIZES = ["38", "40", "42", "44", "46", "48"];
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<SerializedProduct[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,10 +56,13 @@ export default function AdminProductsPage() {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = await getProducts();
-      setProducts(data);
+      const [prods, cats] = await Promise.all([getProducts(), getCategories()]);
+      setProducts(prods);
+      if (cats && cats.length > 0) {
+        setAvailableCategories(cats.map((c) => c.name));
+      }
     } catch (err) {
-      toast.error("Failed to load products");
+      toast.error("Failed to load products or categories");
     } finally {
       setLoading(false);
     }
@@ -354,7 +359,7 @@ export default function AdminProductsPage() {
             className="bg-neutral-900/80 border border-neutral-800 text-xs text-white rounded-lg px-3 py-2 focus:outline-none focus:border-[#c19b65]"
           >
             <option value="All">All Categories ({products.length})</option>
-            {CATEGORIES.map((cat) => (
+            {availableCategories.map((cat) => (
               <option key={cat} value={cat}>
                 {cat}
               </option>
@@ -589,7 +594,7 @@ export default function AdminProductsPage() {
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full px-3.5 py-2.5 bg-neutral-900 border border-neutral-800 text-white rounded-lg focus:outline-none focus:border-[#c19b65]"
                   >
-                    {CATEGORIES.map((c) => (
+                    {availableCategories.map((c) => (
                       <option key={c} value={c}>
                         {c}
                       </option>

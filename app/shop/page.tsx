@@ -1,5 +1,6 @@
 import React from "react";
 import { getProducts } from "@/actions/product";
+import { getCategories } from "@/actions/category";
 import { ShopClient } from "@/components/ShopClient";
 
 export const revalidate = 60; // Incremental Static Regeneration every 60s + instant on-demand tag revalidation
@@ -11,7 +12,11 @@ export const metadata = {
 };
 
 export default async function ShopPage() {
-  const products = await getProducts();
+  const [products, categories] = await Promise.all([
+    getProducts(),
+    getCategories(),
+  ]);
 
-  return <ShopClient initialProducts={products} />;
+  return <ShopClient initialProducts={products} categories={categories} />;
 }
+

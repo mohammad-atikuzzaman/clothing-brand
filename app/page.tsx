@@ -6,24 +6,33 @@ import { ProductCard } from "@/components/ProductCard";
 import { FeaturesStrip } from "@/components/FeaturesStrip";
 import { AboutBrand } from "@/components/AboutBrand";
 import { getFeaturedProducts, getProducts } from "@/actions/product";
+import { getCategories } from "@/actions/category";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 export const revalidate = 60; // 60s background revalidation + on-demand cache tag revalidation
 
 export default async function Home() {
-  const [featuredProducts, signatureProducts, coreClassicProducts] = await Promise.all([
+  const [featuredProducts, categories, allProducts] = await Promise.all([
     getFeaturedProducts(8),
-    getProducts({ category: "Signature Line", limit: 4 }),
-    getProducts({ category: "Core Classics", limit: 4 }),
+    getCategories(),
+    getProducts(),
   ]);
+
+  const signatureProducts = allProducts
+    .filter((p) => p.categorySlug === "signature-line" || p.category === "Signature Line")
+    .slice(0, 4);
+
+  const coreClassicProducts = allProducts
+    .filter((p) => p.categorySlug === "core-classics" || p.category === "Core Classics")
+    .slice(0, 4);
 
   return (
     <div className="bg-white">
       {/* Hero Banner Carousel */}
       <HeroBanner />
 
-      {/* 3-Category Showcase */}
-      <CategoryGrid />
+      {/* Dynamic Category Showcase */}
+      <CategoryGrid categories={categories} />
 
       {/* Main Featured Products Section */}
       <section id="products-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">

@@ -20,6 +20,7 @@ import {
   Search,
   ShieldAlert,
   LogOut,
+  Tags,
 } from "lucide-react";
 import { useAdminStore } from "@/store/useAdminStore";
 import { logoutAction } from "@/actions/auth";
@@ -77,6 +78,11 @@ export default function AdminLayout({
       icon: Package,
       badge: `${totalProductsCount}`,
       badgeColor: "bg-neutral-800 text-neutral-400",
+    },
+    {
+      name: "Categories",
+      href: "/admin/categories",
+      icon: Tags,
     },
     {
       name: "Banners & Content",

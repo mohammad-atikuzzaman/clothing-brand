@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ProductCard } from "@/components/ProductCard";
-import { CATEGORIES } from "@/data/products";
 import { getProducts } from "@/actions/product";
+import { getCategories, getCategoryBySlug } from "@/actions/category";
 import { ArrowLeft } from "lucide-react";
 
 interface CategoryPageProps {
@@ -14,25 +14,26 @@ interface CategoryPageProps {
 export const revalidate = 120; // 2 minutes ISR cache
 
 export async function generateStaticParams() {
-  return CATEGORIES.map((category) => ({
+  const categories = await getCategories();
+  return categories.map((category) => ({
     slug: category.slug,
   }));
 }
 
 export async function generateMetadata({ params }: CategoryPageProps) {
   const { slug } = await params;
-  const category = CATEGORIES.find((c) => c.slug === slug);
-  if (!category) return { title: "Category Not Found | Izhaan" };
+  const category = await getCategoryBySlug(slug);
+  if (!category) return { title: "Category Not Found | Izhaan Lifestyle" };
 
   return {
     title: `${category.name} | Izhaan Lifestyle Panjabi`,
-    description: category.description,
+    description: category.description || `${category.name} collection at Izhaan Lifestyle.`,
   };
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
-  const category = CATEGORIES.find((c) => c.slug === slug);
+  const category = await getCategoryBySlug(slug);
 
   if (!category) {
     notFound();
@@ -44,17 +45,26 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     <div className="bg-white min-h-screen">
       {/* Category Hero Banner */}
       <div className="relative bg-[#161616] text-white py-14 sm:py-20 border-b border-neutral-800 overflow-hidden">
-        <div className="absolute inset-0 opacity-20 bg-cover bg-center" style={{ backgroundImage: `url(${category.image})` }} />
+        {category.image && (
+          <div
+            className="absolute inset-0 opacity-20 bg-cover bg-center"
+            style={{ backgroundImage: `url(${category.image})` }}
+          />
+        )}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <span className="text-[11px] font-bold text-[#c19b65] uppercase tracking-[0.25em] block mb-2">
-            {category.tagline}
-          </span>
+          {category.tagline && (
+            <span className="text-[11px] font-bold text-[#c19b65] uppercase tracking-[0.25em] block mb-2">
+              {category.tagline}
+            </span>
+          )}
           <h1 className="text-3xl sm:text-5xl font-serif font-bold uppercase tracking-wide">
             {category.name}
           </h1>
-          <p className="text-xs sm:text-sm text-neutral-300 mt-3 max-w-xl mx-auto leading-relaxed">
-            {category.description}
-          </p>
+          {category.description && (
+            <p className="text-xs sm:text-sm text-neutral-300 mt-3 max-w-xl mx-auto leading-relaxed">
+              {category.description}
+            </p>
+          )}
         </div>
       </div>
 

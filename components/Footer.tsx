@@ -1,8 +1,23 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Phone, Mail, MapPin, MessageCircle, ShieldCheck, RefreshCw, Truck } from "lucide-react";
+import { getCategories, SerializedCategory } from "@/actions/category";
 
 export const Footer: React.FC = () => {
+  const [categories, setCategories] = useState<SerializedCategory[]>([]);
+
+  useEffect(() => {
+    getCategories()
+      .then((cats) => {
+        if (Array.isArray(cats) && cats.length > 0) {
+          setCategories(cats);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <footer id="footer-section" className="bg-[#161616] text-neutral-300 border-t border-neutral-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-12">
@@ -63,31 +78,48 @@ export const Footer: React.FC = () => {
               Collections
             </h4>
             <ul className="space-y-2.5 text-xs text-neutral-400">
-              <li>
-                <Link href="/product-category/signature-line" className="hover:text-[#c19b65] transition-colors">
-                  Signature Line (এক্সক্লুসিভ)
-                </Link>
-              </li>
-              <li>
-                <Link href="/product-category/core-classics" className="hover:text-[#c19b65] transition-colors">
-                  Core Classics (ক্লাসিক কালেকশন)
-                </Link>
-              </li>
-              <li>
-                <Link href="/product-category/smart-casuals" className="hover:text-[#c19b65] transition-colors">
-                  Smart Casuals (ক্যাজুয়াল পাঞ্জাবি)
-                </Link>
-              </li>
-              <li>
-                <Link href="/product-category/zaqwan" className="hover:text-[#c19b65] transition-colors">
-                  ZAQWAN Royal Edition
-                </Link>
-              </li>
-              <li>
-                <Link href="/product-category/price-990-999" className="text-[#c19b65] hover:underline font-semibold">
-                  Price 990 – 999 Special Deal
-                </Link>
-              </li>
+              {categories.length > 0 ? (
+                categories.slice(0, 6).map((cat) => (
+                  <li key={cat.id}>
+                    <Link
+                      href={`/product-category/${cat.slug}`}
+                      className={`hover:text-[#c19b65] transition-colors ${
+                        cat.slug.includes("990") ? "text-[#c19b65] font-semibold" : ""
+                      }`}
+                    >
+                      {cat.name}
+                    </Link>
+                  </li>
+                ))
+              ) : (
+                <>
+                  <li>
+                    <Link href="/product-category/signature-line" className="hover:text-[#c19b65] transition-colors">
+                      Signature Line (এক্সক্লুসিভ)
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/product-category/core-classics" className="hover:text-[#c19b65] transition-colors">
+                      Core Classics (ক্লাসিক কালেকশন)
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/product-category/smart-casuals" className="hover:text-[#c19b65] transition-colors">
+                      Smart Casuals (ক্যাজুয়াল পাঞ্জাবি)
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/product-category/zaqwan" className="hover:text-[#c19b65] transition-colors">
+                      ZAQWAN Royal Edition
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/product-category/price-990-999" className="text-[#c19b65] hover:underline font-semibold">
+                      Price 990 – 999 Special Deal
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
 

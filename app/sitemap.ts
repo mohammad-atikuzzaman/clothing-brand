@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { connectToDatabase } from "@/lib/db/mongoose";
 import { ProductModel } from "@/lib/models/Product";
-import { CATEGORIES } from "@/data/products";
+import { getCategories } from "@/actions/category";
 
 export const revalidate = 3600; // revalidate sitemap every hour
 
@@ -54,10 +54,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // 2. Category Pages
-  const categoryPages: MetadataRoute.Sitemap = CATEGORIES.map((cat) => ({
+  // 2. Dynamic Category Pages from Database
+  const categories = await getCategories();
+  const categoryPages: MetadataRoute.Sitemap = categories.map((cat) => ({
     url: `${baseUrl}/product-category/${cat.slug}`,
-    lastModified: new Date(),
+    lastModified: cat.updatedAt ? new Date(cat.updatedAt) : new Date(),
     changeFrequency: "weekly",
     priority: 0.8,
   }));
