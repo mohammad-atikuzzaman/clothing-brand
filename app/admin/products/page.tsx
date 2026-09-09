@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import {
   Search,
@@ -15,11 +15,19 @@ import {
   ExternalLink,
   Sparkles,
 } from "lucide-react";
-import { useAdminStore } from "@/store/useAdminStore";
-import { Product } from "@/data/products";
+import {
+  getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  toggleProductStock,
+  toggleProductFeatured,
+  SerializedProduct,
+} from "@/actions/product";
 import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
+import { CloudinaryUpload } from "@/components/CloudinaryUpload";
 
 const CATEGORIES = [
   "Signature Line",
@@ -32,8 +40,8 @@ const CATEGORIES = [
 const AVAILABLE_SIZES = ["38", "40", "42", "44", "46", "48"];
 
 export default function AdminProductsPage() {
-  const { products, addProduct, updateProduct, deleteProduct, toggleStock, toggleFeatured } =
-    useAdminStore();
+  const [products, setProducts] = useState<SerializedProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -41,7 +49,23 @@ export default function AdminProductsPage() {
 
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<SerializedProduct | null>(null);
+
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const data = await getProducts();
+      setProducts(data);
+    } catch (err) {
+      toast.error("Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
 
   // Form states for Add / Edit
   const [formData, setFormData] = useState<{
@@ -50,6 +74,7 @@ export default function AdminProductsPage() {
     category: string;
     regularPrice: number;
     salePrice: number;
+    stockQuantity: number;
     image: string;
     inStock: boolean;
     featured: boolean;
@@ -64,6 +89,7 @@ export default function AdminProductsPage() {
     category: "Signature Line",
     regularPrice: 2999,
     salePrice: 1799,
+    stockQuantity: 100,
     image: "https://izhaanlifestyle.com/wp-content/uploads/2025/12/19e36100-4210-4dc9-ada3-1d7251bc52a5-430x573.jpeg",
     inStock: true,
     featured: false,
@@ -84,13 +110,11 @@ export default function AdminProductsPage() {
           : stockFilter === "InStock"
           ? p.inStock
           : !p.inStock;
-      const query = searchQuery.toLowerCase().trim();
       const matchesSearch =
-        !query ||
-        p.name.toLowerCase().includes(query) ||
-        p.sku?.toLowerCase().includes(query) ||
-        p.category.toLowerCase().includes(query);
-
+        searchQuery.trim() === ""
+          ? true
+          : p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.sku.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCat && matchesStock && matchesSearch;
     });
   }, [products, selectedCategory, stockFilter, searchQuery]);
@@ -103,11 +127,12 @@ export default function AdminProductsPage() {
       category: "Signature Line",
       regularPrice: 2999,
       salePrice: 1799,
+      stockQuantity: 100,
       image: "https://izhaanlifestyle.com/wp-content/uploads/2025/12/19e36100-4210-4dc9-ada3-1d7251bc52a5-430x573.jpeg",
       inStock: true,
       featured: false,
       sizes: ["38", "40", "42", "44"],
-      description: "Premium cotton Panjabi crafted for comfort and festive elegance.",
+      description: "Crafted with superior materials and precision stitching.",
       fabric: "100% Combed Cotton Jacquard",
       fit: "Semi-Slim Fit",
       sku: `IZH-P${Math.floor(100 + Math.random() * 900)}`,
@@ -115,7 +140,7 @@ export default function AdminProductsPage() {
     setIsAddModalOpen(true);
   };
 
-  const openEditModal = (p: Product) => {
+  const openEditModal = (p: SerializedProduct) => {
     setEditingProduct(p);
     setFormData({
       name: p.name,
@@ -123,6 +148,7 @@ export default function AdminProductsPage() {
       category: p.category,
       regularPrice: p.regularPrice,
       salePrice: p.salePrice,
+      stockQuantity: p.stockQuantity ?? 100,
       image: p.image,
       inStock: p.inStock,
       featured: p.featured || false,
@@ -135,7 +161,7 @@ export default function AdminProductsPage() {
     setIsAddModalOpen(true);
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
       toast.error("Please provide a product title.");
@@ -156,56 +182,119 @@ export default function AdminProductsPage() {
 
     const categorySlug = formData.category.toLowerCase().replace(/\s+/g, "-");
 
-    if (editingProduct) {
-      updateProduct(editingProduct.id, {
-        name: formData.name,
-        slug,
-        category: formData.category as Product["category"],
-        categorySlug,
-        regularPrice: Number(formData.regularPrice),
-        salePrice: Number(formData.salePrice),
-        discountPercentage: discount,
-        image: formData.image,
-        inStock: formData.inStock,
-        featured: formData.featured,
-        sizes: formData.sizes,
-        description: formData.description,
-        fabric: formData.fabric,
-        fit: formData.fit,
-        sku: formData.sku,
-      });
-      toast.success(`Product "${formData.name}" updated successfully.`);
-    } else {
-      addProduct({
-        name: formData.name,
-        slug,
-        category: formData.category as Product["category"],
-        categorySlug,
-        regularPrice: Number(formData.regularPrice),
-        salePrice: Number(formData.salePrice),
-        discountPercentage: discount,
-        image: formData.image,
-        galleryImages: [formData.image],
-        inStock: formData.inStock,
-        featured: formData.featured,
-        sizes: formData.sizes,
-        description: formData.description,
-        fabric: formData.fabric,
-        fit: formData.fit,
-        sku: formData.sku,
-        rating: 5,
-        reviewsCount: 1,
-      });
-      toast.success(`Product "${formData.name}" created successfully.`);
-    }
+    try {
+      if (editingProduct) {
+        const res = await updateProduct(editingProduct.id, {
+          name: formData.name,
+          slug,
+          category: formData.category,
+          categorySlug,
+          regularPrice: Number(formData.regularPrice),
+          salePrice: Number(formData.salePrice),
+          discountPercentage: discount,
+          stockQuantity: Number(formData.stockQuantity || 100),
+          image: formData.image,
+          inStock: formData.inStock,
+          featured: formData.featured,
+          sizes: formData.sizes,
+          description: formData.description,
+          fabric: formData.fabric,
+          fit: formData.fit,
+          sku: formData.sku,
+        });
 
-    setIsAddModalOpen(false);
+        if (!res.success || !res.data) {
+          toast.error(res.error || "Failed to update product");
+          return;
+        }
+
+        setProducts((prev) =>
+          prev.map((p) => (p.id === editingProduct.id ? res.data! : p))
+        );
+        toast.success(`Product "${formData.name}" updated successfully.`);
+      } else {
+        const res = await createProduct({
+          name: formData.name,
+          slug,
+          category: formData.category,
+          categorySlug,
+          regularPrice: Number(formData.regularPrice),
+          salePrice: Number(formData.salePrice),
+          discountPercentage: discount,
+          stockQuantity: Number(formData.stockQuantity || 100),
+          image: formData.image,
+          galleryImages: [formData.image],
+          inStock: formData.inStock,
+          featured: formData.featured,
+          sizes: formData.sizes,
+          description: formData.description,
+          fabric: formData.fabric,
+          fit: formData.fit,
+          sku: formData.sku,
+          rating: 5,
+          reviewsCount: 0,
+        });
+
+        if (!res.success || !res.data) {
+          toast.error(res.error || "Failed to create product");
+          return;
+        }
+
+        setProducts((prev) => [res.data!, ...prev]);
+        toast.success(`Product "${formData.name}" created successfully.`);
+      }
+
+      setIsAddModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save product");
+    }
   };
 
-  const handleDelete = (id: string, name: string) => {
+  const handleDelete = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete "${name}"?`)) {
-      deleteProduct(id);
-      toast.success(`Product "${name}" deleted.`);
+      try {
+        const res = await deleteProduct(id);
+        if (!res.success) {
+          toast.error(res.error || "Failed to delete product");
+          return;
+        }
+        setProducts((prev) => prev.filter((p) => p.id !== id));
+        toast.success(`Product "${name}" deleted.`);
+      } catch (err: any) {
+        toast.error(err.message || "Failed to delete product");
+      }
+    }
+  };
+
+  const toggleStock = async (id: string) => {
+    try {
+      const res = await toggleProductStock(id);
+      if (!res.success) {
+        toast.error(res.error || "Failed to toggle stock");
+        return;
+      }
+      setProducts((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, inStock: res.inStock! } : p))
+      );
+      toast.success("Stock status updated");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to toggle stock");
+    }
+  };
+
+  const toggleFeatured = async (id: string) => {
+    try {
+      const res = await toggleProductFeatured(id);
+      if (!res.success) {
+        toast.error(res.error || "Failed to toggle featured");
+        return;
+      }
+      setProducts((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, featured: res.featured! } : p))
+      );
+      toast.success("Featured status updated");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to toggle featured");
     }
   };
 
@@ -509,8 +598,8 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* Pricing (Regular Price & Sale Price) */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Pricing (Regular Price, Sale Price, Stock, SKU) */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-neutral-400 font-bold uppercase tracking-wider mb-1">
                     Regular Price (৳)
@@ -542,6 +631,22 @@ export default function AdminProductsPage() {
 
                 <div>
                   <label className="block text-neutral-400 font-bold uppercase tracking-wider mb-1">
+                    Stock Units <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={0}
+                    value={formData.stockQuantity}
+                    onChange={(e) =>
+                      setFormData({ ...formData, stockQuantity: Number(e.target.value) })
+                    }
+                    className="w-full px-3.5 py-2.5 bg-neutral-900 border border-neutral-800 text-white rounded-lg focus:outline-none focus:border-[#c19b65]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-neutral-400 font-bold uppercase tracking-wider mb-1">
                     SKU Code
                   </label>
                   <input
@@ -554,34 +659,12 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* Image URL with Live Thumbnail Preview */}
-              <div>
-                <label className="block text-neutral-400 font-bold uppercase tracking-wider mb-1">
-                  Product Image URL
-                </label>
-                <div className="flex gap-3">
-                  <input
-                    type="url"
-                    required
-                    value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    placeholder="https://...image.jpg"
-                    className="flex-1 px-3.5 py-2.5 bg-neutral-900 border border-neutral-800 text-white rounded-lg focus:outline-none focus:border-[#c19b65]"
-                  />
-                  <div className="relative w-11 h-11 rounded bg-neutral-800 overflow-hidden flex-shrink-0 border border-neutral-700">
-                    {formData.image && (
-                      <Image
-                        src={formData.image}
-                        alt="Preview"
-                        fill
-                        className="object-cover"
-                        sizes="44px"
-                        unoptimized
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
+              {/* Product Image with Server-Side Cloudinary Upload */}
+              <CloudinaryUpload
+                label="Product Image (Cloudinary Server-Side Upload)"
+                value={formData.image}
+                onChange={(url) => setFormData({ ...formData, image: url })}
+              />
 
               {/* Sizes Available */}
               <div>

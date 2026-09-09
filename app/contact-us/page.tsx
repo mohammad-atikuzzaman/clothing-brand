@@ -15,7 +15,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useAdminStore } from "@/store/useAdminStore";
 
 interface FaqItem {
   question: string;
@@ -50,6 +49,8 @@ const faqs: FaqItem[] = [
   },
 ];
 
+import { submitContactMessage } from "@/actions/contact";
+
 export default function ContactUsPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -64,27 +65,36 @@ export default function ContactUsPage() {
     setActiveFaq(activeFaq === index ? null : index);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !phone || !message) {
+    if (!name.trim() || !phone.trim() || !message.trim()) {
       toast.error("Please fill in your name, phone number, and message.");
       return;
     }
 
     setLoading(true);
-    setTimeout(() => {
-      useAdminStore.getState().addMessage({
+    try {
+      const res = await submitContactMessage({
         name,
-        email,
+        email: email.trim() || undefined,
         phone,
-        company,
+        company: company.trim() || undefined,
         message,
       });
 
-      setLoading(false);
+      if (!res.success) {
+        toast.error(res.error || "Failed to send message. Please check the fields.");
+        setLoading(false);
+        return;
+      }
+
       setSubmitted(true);
       toast.success("Thank you! Your message has been sent to Izhaan Lifestyle.");
-    }, 600);
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

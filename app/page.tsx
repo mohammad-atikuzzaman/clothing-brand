@@ -1,23 +1,21 @@
-"use client";
-
-import React, { useMemo } from "react";
+import React from "react";
 import Link from "next/link";
 import { HeroBanner } from "@/components/HeroBanner";
 import { CategoryGrid } from "@/components/CategoryGrid";
 import { ProductCard } from "@/components/ProductCard";
 import { FeaturesStrip } from "@/components/FeaturesStrip";
 import { AboutBrand } from "@/components/AboutBrand";
-import { PRODUCTS, getProductsByCategory } from "@/data/products";
+import { getFeaturedProducts, getProducts } from "@/actions/product";
 import { ArrowRight, Sparkles } from "lucide-react";
 
-export default function Home() {
-  const featuredProducts = useMemo(
-    () => PRODUCTS.filter((p) => p.featured).slice(0, 8),
-    []
-  );
+export const revalidate = 60; // 60s background revalidation + on-demand cache tag revalidation
 
-  const signatureProducts = useMemo(() => getProductsByCategory("Signature Line").slice(0, 4), []);
-  const coreClassicProducts = useMemo(() => getProductsByCategory("Core Classics").slice(0, 4), []);
+export default async function Home() {
+  const [featuredProducts, signatureProducts, coreClassicProducts] = await Promise.all([
+    getFeaturedProducts(8),
+    getProducts({ category: "Signature Line", limit: 4 }),
+    getProducts({ category: "Core Classics", limit: 4 }),
+  ]);
 
   return (
     <div className="bg-white">
@@ -46,7 +44,7 @@ export default function Home() {
         {/* Product Grid: 4 columns on large, 3 on md, 2 on sm */}
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {featuredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product as any} />
           ))}
         </div>
 
@@ -86,7 +84,7 @@ export default function Home() {
 
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
             {signatureProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product as any} />
             ))}
           </div>
         </div>
@@ -114,7 +112,7 @@ export default function Home() {
 
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
           {coreClassicProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product as any} />
           ))}
         </div>
       </section>

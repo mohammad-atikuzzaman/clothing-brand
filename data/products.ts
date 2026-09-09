@@ -2,7 +2,7 @@ export interface Product {
   id: string;
   name: string;
   slug: string;
-  category: "Signature Line" | "Core Classics" | "Smart Casuals" | "ZAQWAN" | "Price 990 - 999";
+  category: "Signature Line" | "Core Classics" | "Smart Casuals" | "ZAQWAN" | "Price 990 - 999" | string;
   categorySlug: string;
   regularPrice: number;
   salePrice: number;

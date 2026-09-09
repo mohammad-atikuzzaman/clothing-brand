@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import {
   Search,
@@ -19,17 +19,33 @@ import {
   Layers,
   MapPin,
 } from "lucide-react";
-import { useAdminStore, Order, OrderStatus } from "@/store/useAdminStore";
+import { getOrders, updateOrderStatus as updateOrderStatusAction, deleteOrder as deleteOrderAction, SerializedOrder } from "@/actions/order";
 import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function AdminOrdersPage() {
-  const { orders, updateOrderStatus, deleteOrder } = useAdminStore();
-
+  const [orders, setOrders] = useState<SerializedOrder[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<SerializedOrder | null>(null);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+
+  const loadOrders = async () => {
+    try {
+      setLoading(true);
+      const data = await getOrders();
+      setOrders(data);
+    } catch (err) {
+      toast.error("Failed to load orders");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
 
   // Filtered Orders
   const filteredOrders = useMemo(() => {
@@ -39,7 +55,7 @@ export default function AdminOrdersPage() {
       const query = searchQuery.toLowerCase().trim();
       const matchesSearch =
         !query ||
-        order.id.toLowerCase().includes(query) ||
+        order.orderId.toLowerCase().includes(query) ||
         order.customerName.toLowerCase().includes(query) ||
         order.phone.includes(query) ||
         order.district.toLowerCase().includes(query);
@@ -48,7 +64,7 @@ export default function AdminOrdersPage() {
     });
   }, [orders, statusFilter, searchQuery]);
 
-  const getStatusBadge = (status: OrderStatus) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "Pending":
         return "bg-amber-500/10 text-amber-400 border border-amber-500/30";
@@ -67,20 +83,40 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
-    updateOrderStatus(orderId, newStatus);
-    toast.success(`Order ${orderId} updated to ${newStatus}`);
-    if (selectedOrder && selectedOrder.id === orderId) {
-      setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
+  const handleStatusChange = async (orderId: string, newStatus: any) => {
+    try {
+      const res = await updateOrderStatusAction(orderId, newStatus);
+      if (!res.success) {
+        toast.error(res.error || "Failed to update order status");
+        return;
+      }
+      setOrders((prev) =>
+        prev.map((o) => (o.orderId === orderId || o.id === orderId ? { ...o, status: newStatus } : o))
+      );
+      toast.success(`Order ${orderId} updated to ${newStatus}`);
+      if (selectedOrder && (selectedOrder.orderId === orderId || selectedOrder.id === orderId)) {
+        setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update status");
     }
   };
 
-  const handleDelete = (orderId: string) => {
+  const handleDelete = async (orderId: string) => {
     if (confirm(`Are you sure you want to delete order ${orderId}? This cannot be undone.`)) {
-      deleteOrder(orderId);
-      toast.success(`Order ${orderId} deleted.`);
-      if (selectedOrder && selectedOrder.id === orderId) {
-        setSelectedOrder(null);
+      try {
+        const res = await deleteOrderAction(orderId);
+        if (!res.success) {
+          toast.error(res.error || "Failed to delete order");
+          return;
+        }
+        setOrders((prev) => prev.filter((o) => o.orderId !== orderId && o.id !== orderId));
+        toast.success(`Order ${orderId} deleted.`);
+        if (selectedOrder && (selectedOrder.orderId === orderId || selectedOrder.id === orderId)) {
+          setSelectedOrder(null);
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to delete order");
       }
     }
   };
@@ -186,12 +222,12 @@ export default function AdminOrdersPage() {
               ) : (
                 filteredOrders.map((order) => (
                   <tr
-                    key={order.id}
+                    key={order.orderId || order.id}
                     className="hover:bg-neutral-800/30 transition-colors"
                   >
                     {/* Order ID & Date */}
                     <td className="py-3.5 px-4 sm:px-6">
-                      <span className="font-bold text-white block">{order.id}</span>
+                      <span className="font-bold text-white block">{order.orderId || order.id}</span>
                       <span className="text-[10px] text-neutral-400">
                         {new Date(order.createdAt).toLocaleDateString("en-GB", {
                           day: "numeric",
@@ -249,7 +285,7 @@ export default function AdminOrdersPage() {
                       <select
                         value={order.status}
                         onChange={(e) =>
-                          handleStatusChange(order.id, e.target.value as OrderStatus)
+                          handleStatusChange(order.orderId || order.id, e.target.value)
                         }
                         className={`text-[11px] font-bold rounded-lg py-1 px-2.5 focus:outline-none focus:ring-1 focus:ring-[#c19b65] cursor-pointer ${getStatusBadge(
                           order.status
@@ -287,7 +323,7 @@ export default function AdminOrdersPage() {
                       </button>
 
                       <button
-                        onClick={() => handleDelete(order.id)}
+                        onClick={() => handleDelete(order.orderId || order.id)}
                         className="p-1.5 rounded-lg bg-neutral-800 hover:bg-red-500/20 text-neutral-400 hover:text-red-400 transition-colors"
                         title="Delete Order"
                       >
@@ -313,7 +349,7 @@ export default function AdminOrdersPage() {
                   Order Details
                 </span>
                 <h3 className="text-lg font-bold text-white">
-                  Order #{selectedOrder.id}
+                  Order #{selectedOrder.orderId || selectedOrder.id}
                 </h3>
               </div>
               <button
@@ -437,7 +473,7 @@ export default function AdminOrdersPage() {
                   <select
                     value={selectedOrder.status}
                     onChange={(e) =>
-                      handleStatusChange(selectedOrder.id, e.target.value as OrderStatus)
+                      handleStatusChange(selectedOrder.orderId || selectedOrder.id, e.target.value)
                     }
                     className="bg-neutral-900 border border-neutral-700 text-xs text-white rounded-lg py-2 px-3 focus:outline-none focus:border-[#c19b65]"
                   >

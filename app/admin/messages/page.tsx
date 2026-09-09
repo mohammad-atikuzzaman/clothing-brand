@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MessageSquare,
   Phone,
@@ -12,13 +12,35 @@ import {
   Archive,
   Search,
 } from "lucide-react";
-import { useAdminStore, ContactMessage } from "@/store/useAdminStore";
+import {
+  getContactMessages,
+  updateMessageStatus as updateMessageStatusAction,
+  deleteContactMessage as deleteContactMessageAction,
+  SerializedContactMessage,
+} from "@/actions/contact";
 import { toast } from "sonner";
 
 export default function AdminMessagesPage() {
-  const { messages, updateMessageStatus, deleteMessage } = useAdminStore();
+  const [messages, setMessages] = useState<SerializedContactMessage[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const loadMessages = async () => {
+    try {
+      setLoading(true);
+      const data = await getContactMessages();
+      setMessages(data);
+    } catch (err) {
+      toast.error("Failed to load messages");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMessages();
+  }, []);
 
   const filteredMessages = messages.filter((m) => {
     const matchesFilter = filter === "All" ? true : m.status === filter;
@@ -33,15 +55,27 @@ export default function AdminMessagesPage() {
     return matchesFilter && matchesSearch;
   });
 
-  const handleStatus = (id: string, status: ContactMessage["status"]) => {
-    updateMessageStatus(id, status);
-    toast.success(`Message marked as ${status}`);
+  const handleStatus = async (id: string, status: "Unread" | "Replied" | "Archived") => {
+    try {
+      await updateMessageStatusAction(id, status);
+      setMessages((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, status } : m))
+      );
+      toast.success(`Message marked as ${status}`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update status");
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Delete this inquiry?")) {
-      deleteMessage(id);
-      toast.success("Inquiry removed.");
+      try {
+        await deleteContactMessageAction(id);
+        setMessages((prev) => prev.filter((m) => m.id !== id));
+        toast.success("Inquiry removed.");
+      } catch (err: any) {
+        toast.error(err.message || "Failed to delete message");
+      }
     }
   };
 

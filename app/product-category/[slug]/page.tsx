@@ -3,12 +3,15 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ProductCard } from "@/components/ProductCard";
-import { CATEGORIES, getProductsByCategory } from "@/data/products";
+import { CATEGORIES } from "@/data/products";
+import { getProducts } from "@/actions/product";
 import { ArrowLeft } from "lucide-react";
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
 }
+
+export const revalidate = 120; // 2 minutes ISR cache
 
 export async function generateStaticParams() {
   return CATEGORIES.map((category) => ({
@@ -35,7 +38,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     notFound();
   }
 
-  const products = getProductsByCategory(slug);
+  const products = await getProducts({ category: category.name });
 
   return (
     <div className="bg-white min-h-screen">

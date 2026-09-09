@@ -1,17 +1,36 @@
 "use client";
 
 import React from "react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { FloatingChat } from "@/components/FloatingChat";
-import { CartDrawer } from "@/components/CartDrawer";
-import { WishlistDrawer } from "@/components/WishlistDrawer";
-import { SearchBarModal } from "@/components/SearchBarModal";
-import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
-import { AuthModal } from "@/components/AuthModal";
-import { SizeGuideModal } from "@/components/SizeGuideModal";
+
+// Lazy-load secondary global drawers & modals to drastically reduce initial page bundle weight
+const CartDrawer = dynamic(() => import("@/components/CartDrawer").then((m) => m.CartDrawer), {
+  ssr: false,
+});
+const WishlistDrawer = dynamic(
+  () => import("@/components/WishlistDrawer").then((m) => m.WishlistDrawer),
+  { ssr: false }
+);
+const SearchBarModal = dynamic(
+  () => import("@/components/SearchBarModal").then((m) => m.SearchBarModal),
+  { ssr: false }
+);
+const ProductQuickViewModal = dynamic(
+  () => import("@/components/ProductQuickViewModal").then((m) => m.ProductQuickViewModal),
+  { ssr: false }
+);
+const AuthModal = dynamic(() => import("@/components/AuthModal").then((m) => m.AuthModal), {
+  ssr: false,
+});
+const SizeGuideModal = dynamic(
+  () => import("@/components/SizeGuideModal").then((m) => m.SizeGuideModal),
+  { ssr: false }
+);
 
 interface AppShellProps {
   children: React.ReactNode;

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useAdminStore, BannerSlide } from "@/store/useAdminStore";
 import { toast } from "sonner";
+import { CloudinaryUpload } from "@/components/CloudinaryUpload";
 
 export default function AdminContentPage() {
   const { banners, addBanner, updateBanner, deleteBanner, settings, updateSettings } =
@@ -312,19 +313,11 @@ export default function AdminContentPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-neutral-400 font-bold uppercase tracking-wider mb-1">
-                  Banner Image URL (1900 x 550 recommended) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="url"
-                  required
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  placeholder="https://...webp"
-                  className="w-full px-3.5 py-2.5 bg-neutral-900 border border-neutral-800 text-white rounded-lg focus:outline-none focus:border-[#c19b65]"
-                />
-              </div>
+              <CloudinaryUpload
+                label="Banner Image (1900 x 550 recommended, Cloudinary Upload)"
+                value={formData.image}
+                onChange={(url) => setFormData({ ...formData, image: url })}
+              />
 
               <div className="pt-4 border-t border-neutral-800 flex justify-end gap-2.5">
                 <button

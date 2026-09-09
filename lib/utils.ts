@@ -8,3 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 export function formatPrice(amount: number): string {
   return `${amount.toLocaleString("en-US")} ৳`;
 }
+
+export function escapeRegex(string: string): string {
+  return string.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&");
+}

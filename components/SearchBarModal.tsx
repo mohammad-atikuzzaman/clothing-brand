@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Search, X, ShoppingBag } from "lucide-react";
 import { PRODUCTS, Product } from "@/data/products";
+import { getProducts, SerializedProduct } from "@/actions/product";
 import { useUIStore } from "@/store/useUIStore";
 import { formatPrice } from "@/lib/utils";
 
@@ -21,6 +22,13 @@ export const SearchBarModal: React.FC<SearchBarModalProps> = ({
 }) => {
   const { isSearchOpen: storeIsOpen, closeSearch: storeCloseSearch, openQuickView } = useUIStore();
   const [query, setQuery] = useState("");
+  const [products, setProducts] = useState<SerializedProduct[]>(PRODUCTS as any);
+
+  React.useEffect(() => {
+    getProducts().then((data) => {
+      if (data && data.length > 0) setProducts(data);
+    });
+  }, []);
 
   const isOpen = propIsOpen !== undefined ? propIsOpen : storeIsOpen;
   const onClose = propOnClose !== undefined ? propOnClose : storeCloseSearch;
@@ -28,13 +36,13 @@ export const SearchBarModal: React.FC<SearchBarModalProps> = ({
   const filteredProducts = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
-    return PRODUCTS.filter(
+    return products.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
-        p.fabric.toLowerCase().includes(q)
+        (p.fabric && p.fabric.toLowerCase().includes(q))
     );
-  }, [query]);
+  }, [query, products]);
 
   if (!isOpen) return null;
 

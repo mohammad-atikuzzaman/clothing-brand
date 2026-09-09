@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Settings,
   Phone,
@@ -14,22 +14,55 @@ import {
   Share2,
   CheckCircle2,
 } from "lucide-react";
-import { useAdminStore, StoreSettings } from "@/store/useAdminStore";
+import { getStoreSettings, updateStoreSettings, SerializedSettings } from "@/actions/settings";
 import { toast } from "sonner";
 
 export default function AdminSettingsPage() {
-  const { settings, updateSettings } = useAdminStore();
-  const [formData, setFormData] = useState<StoreSettings>(settings);
+  const [formData, setFormData] = useState<SerializedSettings>({
+    storeName: "Izhaan Lifestyle",
+    tagline: "Elegance Redefined | Premium Menswear & Panjabi",
+    hotline: "+880 1888-299388",
+    whatsapp: "+880 1888-299388",
+    email: "support@izhaanlifestyle.com",
+    address: "Level 4, Plot 12, Road 11, Banani, Dhaka-1213, Bangladesh",
+    operatingHours: "Everyday: 10:00 AM - 10:00 PM (GMT+6)",
+    shippingDhaka: 70,
+    shippingOutside: 130,
+    bkashNumber: "01888299388 (Merchant)",
+    facebookUrl: "https://facebook.com/izhaanlifestyle",
+    instagramUrl: "https://instagram.com/izhaanlifestyle",
+  });
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    getStoreSettings()
+      .then((data) => {
+        setFormData(data);
+      })
+      .catch((err) => {
+        toast.error("Failed to load settings");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setTimeout(() => {
-      updateSettings(formData);
-      setSaving(false);
+    try {
+      const res = await updateStoreSettings(formData);
+      if (!res.success) {
+        toast.error(res.error || "Failed to update settings");
+        return;
+      }
       toast.success("Store settings & contact information updated successfully!");
-    }, 400);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save settings");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

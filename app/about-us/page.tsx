@@ -49,7 +49,7 @@ export default function AboutUsPage() {
           </div>
 
           <div className="lg:col-span-6">
-            <div className="relative aspect-[4/3] rounded-xs overflow-hidden border border-neutral-200 shadow-md">
+            <div className="relative w-full aspect-[4/3] min-h-[280px] sm:min-h-[380px] rounded-xs overflow-hidden border border-neutral-200 shadow-md">
               <Image
                 src="https://izhaanlifestyle.com/wp-content/uploads/2025/12/3.jpg"
                 alt="Izhaan Craftsmanship"

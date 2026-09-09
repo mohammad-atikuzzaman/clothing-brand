@@ -18,8 +18,12 @@ import {
   RotateCcw,
   Sparkles,
   Search,
+  ShieldAlert,
+  LogOut,
 } from "lucide-react";
 import { useAdminStore } from "@/store/useAdminStore";
+import { logoutAction } from "@/actions/auth";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export default function AdminLayout({
@@ -27,6 +31,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -90,7 +95,23 @@ export default function AdminLayout({
       href: "/admin/settings",
       icon: Settings,
     },
+    {
+      name: "Security & Firewall",
+      href: "/admin/security",
+      icon: ShieldAlert,
+    },
   ];
+
+  const handleLogout = async () => {
+    try {
+      await logoutAction();
+      toast.success("Signed out of administrative console.");
+      router.push("/admin/login");
+      router.refresh();
+    } catch (err: any) {
+      toast.error("Logout failed: " + err.message);
+    }
+  };
 
   const handleResetData = () => {
     if (confirm("Reset all admin data, orders, and products back to initial demo state?")) {
@@ -220,11 +241,20 @@ export default function AdminLayout({
           </div>
 
           <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-[11px] font-semibold transition-colors cursor-pointer"
+            title="Sign out of Admin Console"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Sign Out</span>
+          </button>
+
+          <button
             onClick={handleResetData}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md bg-neutral-800/40 hover:bg-red-500/10 hover:text-red-400 text-neutral-400 border border-neutral-700/30 text-[11px] font-medium transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-md bg-neutral-800/40 hover:bg-neutral-800 text-neutral-400 border border-neutral-700/30 text-[10px] font-medium transition-colors"
             title="Reset to default demo orders and products"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-3 h-3" />
             <span>Reset Demo Data</span>
           </button>
         </div>

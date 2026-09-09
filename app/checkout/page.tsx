@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { useCartStore } from "@/store/useCartStore";
-import { useAdminStore } from "@/store/useAdminStore";
 import { formatPrice } from "@/lib/utils";
 import {
   ShieldCheck,
@@ -19,6 +18,8 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+
+import { createOrder } from "@/actions/order";
 
 export default function CheckoutPage() {
   const [mounted, setMounted] = useState(false);
@@ -60,7 +61,7 @@ export default function CheckoutPage() {
   const shippingCost = getShippingCost();
   const grandTotal = getTotal();
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!fullName.trim()) {
@@ -68,9 +69,9 @@ export default function CheckoutPage() {
       return;
     }
 
-    // BD Phone validation: 11 digits starting with 01
-    const cleanPhone = phone.replace(/[^0-9]/g, "");
-    if (cleanPhone.length !== 11 || !cleanPhone.startsWith("01")) {
+    // BD Phone validation
+    const cleanPhone = phone.replace(/[\s-]/g, "");
+    if (!/^(?:\+?88)?01[3-9]\d{8}$/.test(cleanPhone)) {
       toast.error("Please enter a valid 11-digit Bangladeshi mobile number (01XXXXXXXXX).");
       return;
     }
@@ -87,19 +88,16 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
 
-    const generatedOrderId = `IZH-${Math.floor(100000 + Math.random() * 900000)}`;
-
-    setTimeout(() => {
-      // Save order to Admin Store
-      useAdminStore.getState().addOrder({
-        id: generatedOrderId,
+    try {
+      const res = await createOrder({
         customerName: fullName,
         phone: cleanPhone,
         address,
         district,
         notes: orderNotes,
-        items: items.map((it, index) => ({
-          id: `${it.product.id}-${it.size}-${index}`,
+        paymentMethod,
+        shippingArea,
+        items: items.map((it) => ({
           productId: it.product.id,
           name: it.product.name,
           slug: it.product.slug,
@@ -108,25 +106,32 @@ export default function CheckoutPage() {
           selectedSize: it.size,
           quantity: it.quantity,
         })),
-        subtotal,
-        shippingCost,
-        total: grandTotal,
-        paymentMethod,
       });
 
+      if (!res.success || !res.order) {
+        toast.error(res.error || "Failed to place order. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
       setConfirmedOrder({
-        orderId: generatedOrderId,
-        customerName: fullName,
-        phone: cleanPhone,
-        address: `${address}, ${district}`,
-        total: grandTotal,
-        shippingCost,
+        orderId: res.order.orderId,
+        customerName: res.order.customerName,
+        phone: res.order.phone,
+        address: `${res.order.address}, ${res.order.district}`,
+        total: res.order.total,
+        shippingCost: res.order.shippingCost,
         items: [...items],
       });
+
       clearCart();
-      setIsSubmitting(false);
+      toast.success(`Order placed successfully! Order ID: ${res.order.orderId}`);
       window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 800);
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Order Confirmed Screen

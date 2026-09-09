@@ -20,6 +20,7 @@ import {
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useUIStore } from "@/store/useUIStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import { formatPrice } from "@/lib/utils";
 
 interface HeaderProps {
@@ -34,12 +35,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onSelectCategory }
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileShopExpanded, setMobileShopExpanded] = useState(true);
 
+  const { user, fetchUser } = useAuthStore();
   const { getTotalItems, getSubtotal, openCart } = useCartStore();
   const { items: wishlistItems } = useWishlistStore();
   const { openSearch: globalOpenSearch, openAuth } = useUIStore();
 
   useEffect(() => {
     setMounted(true);
+    fetchUser(); // Instant cached check! Zero network requests on subsequent navigations.
 
     const handleScroll = () => {
       if (window.scrollY > 20) {
@@ -298,16 +301,36 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onSelectCategory }
             {/* Right Tools (Account, Search, Wishlist, Cart) */}
             <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4 xl:space-x-5 z-10 ml-auto">
               {/* Account / Login (Desktop only) */}
-              <button
-                onClick={() => openAuth("login")}
-                className="hidden lg:flex items-center gap-1.5 text-xs text-neutral-300 hover:text-white py-1.5 px-2 rounded-sm hover:bg-neutral-800/60 transition-colors"
-                title="Login / Register"
-              >
-                <User className="w-4 h-4 text-[#c19b65]" />
-                <span className="font-medium tracking-wider uppercase text-[11px]">
-                  Sign In
-                </span>
-              </button>
+              {user ? (
+                <Link
+                  href="/my-account"
+                  className="hidden lg:flex items-center gap-2 text-xs text-neutral-200 hover:text-white py-1.5 px-2.5 rounded-sm hover:bg-neutral-800/60 transition-colors"
+                  title={`${user.name} (${user.role})`}
+                >
+                  <div className="w-6 h-6 rounded-full bg-[#c19b65] text-black font-bold text-[10px] flex items-center justify-center font-serif">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-semibold tracking-wider uppercase text-[11px] max-w-[90px] truncate">
+                    {user.name.split(" ")[0]}
+                  </span>
+                  {user.role === "admin" && (
+                    <span className="text-[8px] bg-amber-500/20 text-amber-300 px-1 py-0.5 rounded font-mono font-bold tracking-tight border border-amber-500/30">
+                      ADMIN
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <button
+                  onClick={() => openAuth("login")}
+                  className="hidden lg:flex items-center gap-1.5 text-xs text-neutral-300 hover:text-white py-1.5 px-2 rounded-sm hover:bg-neutral-800/60 transition-colors"
+                  title="Login / Register"
+                >
+                  <User className="w-4 h-4 text-[#c19b65]" />
+                  <span className="font-medium tracking-wider uppercase text-[11px]">
+                    Sign In
+                  </span>
+                </button>
+              )}
 
               {/* Search */}
               <button

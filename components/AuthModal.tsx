@@ -1,11 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Lock, Mail, User, CheckCircle2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Lock, Mail, User, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { useUIStore } from "@/store/useUIStore";
+import { useAuthStore } from "@/store/useAuthStore";
+import { loginAction, registerAction } from "@/actions/auth";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export const AuthModal: React.FC = () => {
+  const router = useRouter();
+  const { setUser } = useAuthStore();
   const { isAuthOpen, closeAuth, authDefaultTab } = useUIStore();
   const [tab, setTab] = useState<"login" | "register">(authDefaultTab || "login");
   const [loginEmail, setLoginEmail] = useState("");
@@ -15,42 +20,84 @@ export const AuthModal: React.FC = () => {
   const [registerPhone, setRegisterPhone] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorText, setErrorText] = useState("");
 
   // Sync tab with defaultTab when modal opens
   React.useEffect(() => {
     if (authDefaultTab) {
       setTab(authDefaultTab);
     }
-  }, [authDefaultTab]);
+    setErrorText("");
+  }, [authDefaultTab, isAuthOpen]);
 
   if (!isAuthOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorText("");
     if (!loginEmail || !loginPassword) {
-      toast.error("Please enter both email and password.");
+      setErrorText("Please enter both email and password.");
       return;
     }
+
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      toast.success("Successfully logged in to Izhaan Lifestyle!");
+    const toastId = toast.loading("Authenticating...");
+
+    try {
+      const res = await loginAction({ email: loginEmail, password: loginPassword });
+      if (!res.success || !res.user) {
+        setErrorText(res.message || "Invalid credentials.");
+        toast.error(res.message || "Login failed", { id: toastId });
+        return;
+      }
+
+      setUser(res.user);
+      toast.success(`Welcome back, ${res.user.name}!`, { id: toastId });
       closeAuth();
-    }, 600);
+      router.refresh();
+    } catch (err: any) {
+      setErrorText(err.message || "An authentication error occurred.");
+      toast.error("Network or security error", { id: toastId });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorText("");
     if (!registerName || !registerEmail || !registerPassword) {
-      toast.error("Please fill in all required fields.");
+      setErrorText("Please fill in all required fields.");
       return;
     }
+
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      toast.success("Account created successfully! Welcome to Izhaan.");
+    const toastId = toast.loading("Creating your Izhaan account...");
+
+    try {
+      const res = await registerAction({
+        name: registerName,
+        email: registerEmail,
+        phone: registerPhone,
+        password: registerPassword,
+      });
+
+      if (!res.success || !res.user) {
+        setErrorText(res.message || "Could not register account.");
+        toast.error(res.message || "Registration failed", { id: toastId });
+        return;
+      }
+
+      setUser(res.user);
+      toast.success(`Welcome, ${res.user.name}! Your account is ready.`, { id: toastId });
       closeAuth();
-    }, 600);
+      router.refresh();
+    } catch (err: any) {
+      setErrorText(err.message || "Registration failed.");
+      toast.error("Network or security error", { id: toastId });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -107,6 +154,13 @@ export const AuthModal: React.FC = () => {
 
         {/* Form Body */}
         <div className="p-6">
+          {errorText && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-sm flex items-start gap-2 text-xs text-red-600">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>{errorText}</span>
+            </div>
+          )}
+
           {tab === "login" ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
