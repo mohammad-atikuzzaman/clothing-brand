@@ -24,14 +24,16 @@ export const SearchBarModal: React.FC<SearchBarModalProps> = ({
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState<SerializedProduct[]>(PRODUCTS as any);
 
-  React.useEffect(() => {
-    getProducts().then((data) => {
-      if (data && data.length > 0) setProducts(data);
-    });
-  }, []);
-
   const isOpen = propIsOpen !== undefined ? propIsOpen : storeIsOpen;
   const onClose = propOnClose !== undefined ? propOnClose : storeCloseSearch;
+
+  React.useEffect(() => {
+    if (isOpen) {
+      getProducts().then((data) => {
+        if (data && data.length > 0) setProducts(data);
+      });
+    }
+  }, [isOpen]);
 
   const filteredProducts = useMemo(() => {
     if (!query.trim()) return [];

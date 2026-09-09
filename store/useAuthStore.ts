@@ -20,6 +20,8 @@ interface AuthState {
   clearUser: () => void;
 }
 
+let inFlightPromise: Promise<AuthUser | null> | null = null;
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: false,
@@ -31,15 +33,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return get().user;
     }
 
-    set({ isLoading: true });
-    try {
-      const res = await getCurrentUserAction();
-      set({ user: res.user, hasChecked: true, isLoading: false });
-      return res.user;
-    } catch {
-      set({ user: null, hasChecked: true, isLoading: false });
-      return null;
+    if (inFlightPromise) {
+      return inFlightPromise;
     }
+
+    set({ isLoading: true });
+    inFlightPromise = (async () => {
+      try {
+        const res = await getCurrentUserAction();
+        set({ user: res.user, hasChecked: true, isLoading: false });
+        return res.user;
+      } catch {
+        set({ user: null, hasChecked: true, isLoading: false });
+        return null;
+      } finally {
+        inFlightPromise = null;
+      }
+    })();
+
+    return inFlightPromise;
   },
 
   setUser: (user) => set({ user, hasChecked: true }),

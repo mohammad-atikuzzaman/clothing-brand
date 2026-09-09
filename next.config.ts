@@ -1,3 +1,4 @@
+import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -30,7 +31,7 @@ const nextConfig: NextConfig = {
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       font-src 'self' https://fonts.gstatic.com data:;
       img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://izhaanlifestyle.com https://www.google-analytics.com;
-      connect-src 'self' https://res.cloudinary.com https://*.sentry.io https://www.google-analytics.com https://region1.google-analytics.com;
+      connect-src 'self' https://res.cloudinary.com https://*.sentry.io https://*.ingest.de.sentry.io https://www.google-analytics.com https://region1.google-analytics.com;
       frame-ancestors 'self';
       object-src 'none';
       base-uri 'self';
@@ -71,4 +72,23 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: "softpirex",
+  project: "clothing",
+
+  // Only print logs for uploading source maps in CI
+  silent: !process.env.CI,
+
+  // Upload a larger set of source maps for prettier stack traces
+  widenClientFileUpload: true,
+
+  // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
+  tunnelRoute: "/monitoring",
+
+  webpack: {
+    automaticVercelMonitors: true,
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
+});
