@@ -39,6 +39,7 @@ export async function generateMetadata({ params }: ProductPageProps) {
           url: imgUrl,
           width: 800,
           height: 1067,
+          type: "image/jpeg",
           alt: `${product.name} - View ${index + 1} | Izhaan Lifestyle`,
         }))
       : [
@@ -46,6 +47,7 @@ export async function generateMetadata({ params }: ProductPageProps) {
             url: "/og-image.jpg",
             width: 1200,
             height: 630,
+            type: "image/jpeg",
             alt: product.name,
           },
         ];
