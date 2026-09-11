@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { useCartStore } from "@/store/useCartStore";
 import { formatPrice } from "@/lib/utils";
+import { trackEvent } from "@/lib/fpixel";
 import {
   ShieldCheck,
   Truck,
@@ -45,9 +46,30 @@ export default function CheckoutPage() {
     items: typeof items;
   } | null>(null);
 
+  const hasTrackedCheckout = useRef(false);
+  const hasTrackedPurchase = useRef(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Track Meta Pixel InitiateCheckout once
+  useEffect(() => {
+    if (mounted && items.length > 0 && !hasTrackedCheckout.current && !confirmedOrder) {
+      hasTrackedCheckout.current = true;
+      try {
+        trackEvent("InitiateCheckout", {
+          num_items: items.reduce((acc, i) => acc + i.quantity, 0),
+          value: getTotal(),
+          currency: "BDT",
+          content_type: "product",
+          content_ids: items.map((i) => i.product.id),
+        });
+      } catch {
+        // Non-blocking
+      }
+    }
+  }, [mounted, items, confirmedOrder, getTotal]);
 
   if (!mounted) {
     return (
@@ -123,6 +145,28 @@ export default function CheckoutPage() {
         shippingCost: res.order.shippingCost,
         items: [...items],
       });
+
+      // Trigger Client-side Meta Pixel Purchase event
+      // Uses the identical orderId as eventID for 100% deduplication with server CAPI
+      if (!hasTrackedPurchase.current) {
+        hasTrackedPurchase.current = true;
+        try {
+          trackEvent(
+            "Purchase",
+            {
+              value: res.order.total,
+              currency: "BDT",
+              order_id: res.order.orderId,
+              num_items: res.order.items.reduce((acc, it) => acc + it.quantity, 0),
+              content_type: "product",
+              content_ids: res.order.items.map((it) => it.productId),
+            },
+            res.order.orderId
+          );
+        } catch {
+          // Non-blocking
+        }
+      }
 
       clearCart();
       toast.success(`Order placed successfully! Order ID: ${res.order.orderId}`);

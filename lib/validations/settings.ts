@@ -13,6 +13,11 @@ export const storeSettingsSchema = z.object({
   bkashNumber: z.string().trim().min(5, "bKash merchant/personal number is required"),
   facebookUrl: z.string().trim().url("Invalid Facebook URL").optional().or(z.literal("")),
   instagramUrl: z.string().trim().url("Invalid Instagram URL").optional().or(z.literal("")),
+  metaPixelId: z.string().trim().optional().or(z.literal("")),
+  metaCapiToken: z.string().trim().optional().or(z.literal("")),
+  metaTestEventCode: z.string().trim().optional().or(z.literal("")),
+  metaDomainVerification: z.string().trim().optional().or(z.literal("")),
+  isMetaTrackingEnabled: z.boolean().optional(),
 });
 
 export type StoreSettingsInput = z.infer<typeof storeSettingsSchema>;

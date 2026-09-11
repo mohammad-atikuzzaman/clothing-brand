@@ -25,9 +25,36 @@ export async function generateMetadata({ params }: CategoryPageProps) {
   const category = await getCategoryBySlug(slug);
   if (!category) return { title: "Category Not Found | Izhaan Lifestyle" };
 
+  const title = `${category.name} | Izhaan Lifestyle Panjabi`;
+  const description =
+    category.description ||
+    `Explore exclusive ${category.name} premium Panjabi collection at Izhaan Lifestyle. Nationwide Cash on Delivery.`;
+  const image = category.image || "/og-image.jpg";
+
   return {
-    title: `${category.name} | Izhaan Lifestyle Panjabi`,
-    description: category.description || `${category.name} collection at Izhaan Lifestyle.`,
+    title,
+    description,
+    openGraph: {
+      type: "website",
+      url: `/product-category/${category.slug}`,
+      siteName: "Izhaan Lifestyle",
+      title,
+      description,
+      images: [
+        {
+          url: image,
+          width: 1200,
+          height: 630,
+          alt: `${category.name} - Izhaan Lifestyle`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
   };
 }
 

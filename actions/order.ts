@@ -13,6 +13,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin, requireAuth, getClientIp, getSession } from "@/lib/auth";
 import { isIpBanned, checkRateLimit } from "@/lib/security";
 import { escapeRegex } from "@/lib/utils";
+import { sendMetaCapiEvent } from "@/lib/meta-capi";
 
 export interface SerializedOrder {
   id: string;
@@ -181,6 +182,38 @@ export async function createOrder(input: CreateOrderInput) {
     // Set orderId directly to the MongoDB ObjectId
     newOrder.orderId = newOrder._id.toString();
     await newOrder.save();
+
+    // Server-Side Meta Conversions API (CAPI) Tracking
+    // Non-blocking with identical eventId for 100% deduplication
+    try {
+      sendMetaCapiEvent({
+        eventName: "Purchase",
+        eventId: newOrder.orderId,
+        user: {
+          phone: data.phone,
+          email: session?.email || undefined,
+          name: data.customerName,
+          clientIp: ip,
+        },
+        customData: {
+          currency: "BDT",
+          value: total,
+          order_id: newOrder.orderId,
+          num_items: verifiedItems.reduce((acc, item) => acc + item.quantity, 0),
+          content_type: "product",
+          content_ids: verifiedItems.map((item) => item.productId),
+          contents: verifiedItems.map((item) => ({
+            id: item.productId,
+            quantity: item.quantity,
+            item_price: item.price,
+          })),
+        },
+      }).catch((capiErr) => {
+        console.warn("[Meta CAPI] Purchase background error:", capiErr);
+      });
+    } catch {
+      // Non-blocking
+    }
 
     // Atomically decrement stock
     for (const item of verifiedItems) {

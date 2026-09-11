@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { Product } from "@/data/products";
+import { trackEvent } from "@/lib/fpixel";
 
 export interface CartItem {
   product: Product;
@@ -61,6 +62,20 @@ export const useCartStore = create<CartStore>()(
           set({
             items: [...currentItems, { product, size, quantity }],
           });
+        }
+
+        // Trigger Meta Pixel AddToCart
+        try {
+          trackEvent("AddToCart", {
+            content_name: product.name,
+            content_category: product.category,
+            content_ids: [product.id],
+            content_type: "product",
+            value: (product.salePrice || product.regularPrice) * quantity,
+            currency: "BDT",
+          });
+        } catch {
+          // Non-blocking
         }
       },
 

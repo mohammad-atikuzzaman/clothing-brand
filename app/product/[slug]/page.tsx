@@ -27,13 +27,50 @@ export async function generateMetadata({ params }: ProductPageProps) {
     };
   }
 
+  // Collect primary image and gallery images without duplicates
+  const rawImages = [product.image, ...(product.galleryImages || [])].filter(
+    (img): img is string => Boolean(img && img.trim())
+  );
+  const uniqueImages = Array.from(new Set(rawImages));
+
+  const ogImages =
+    uniqueImages.length > 0
+      ? uniqueImages.map((imgUrl, index) => ({
+          url: imgUrl,
+          width: 800,
+          height: 1067,
+          alt: `${product.name} - View ${index + 1} | Izhaan Lifestyle`,
+        }))
+      : [
+          {
+            url: "/og-image.jpg",
+            width: 1200,
+            height: 630,
+            alt: product.name,
+          },
+        ];
+
+  const shareTitle = `${product.name} - ৳${Number(product.salePrice).toLocaleString("en-BD")}`;
+  const shareDesc =
+    product.description ||
+    `Buy ${product.name} crafted with ${product.fabric || "Premium Cotton"}. Nationwide Cash on Delivery across Bangladesh. Available at Izhaan Lifestyle.`;
+
   return {
-    title: `${product.name} - ৳${product.salePrice} | Izhaan Lifestyle`,
-    description: product.description || `Buy ${product.name} crafted with ${product.fabric}. Nationwide Cash on Delivery.`,
+    title: `${shareTitle} | Izhaan Lifestyle`,
+    description: shareDesc,
     openGraph: {
-      title: product.name,
-      description: product.description,
-      images: [product.image],
+      type: "website",
+      url: `/product/${product.slug}`,
+      siteName: "Izhaan Lifestyle",
+      title: `${shareTitle} | Izhaan Lifestyle`,
+      description: shareDesc,
+      images: ogImages,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${shareTitle} | Izhaan Lifestyle`,
+      description: shareDesc,
+      images: uniqueImages.length > 0 ? uniqueImages : ["/og-image.jpg"],
     },
   };
 }

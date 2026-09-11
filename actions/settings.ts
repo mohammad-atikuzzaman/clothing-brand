@@ -20,6 +20,11 @@ export interface SerializedSettings {
   bkashNumber: string;
   facebookUrl: string;
   instagramUrl: string;
+  metaPixelId?: string;
+  metaCapiToken?: string;
+  metaTestEventCode?: string;
+  metaDomainVerification?: string;
+  isMetaTrackingEnabled?: boolean;
 }
 
 const DEFAULT_SETTINGS: SerializedSettings = {
@@ -35,6 +40,11 @@ const DEFAULT_SETTINGS: SerializedSettings = {
   bkashNumber: "01888299388 (Merchant)",
   facebookUrl: "https://facebook.com/izhaanlifestyle",
   instagramUrl: "https://instagram.com/izhaanlifestyle",
+  metaPixelId: "",
+  metaCapiToken: "",
+  metaTestEventCode: "",
+  metaDomainVerification: "",
+  isMetaTrackingEnabled: true,
 };
 
 async function fetchSettingsFromDb(): Promise<SerializedSettings> {
@@ -57,6 +67,12 @@ async function fetchSettingsFromDb(): Promise<SerializedSettings> {
     bkashNumber: doc.bkashNumber || DEFAULT_SETTINGS.bkashNumber,
     facebookUrl: doc.facebookUrl || DEFAULT_SETTINGS.facebookUrl,
     instagramUrl: doc.instagramUrl || DEFAULT_SETTINGS.instagramUrl,
+    metaPixelId: doc.metaPixelId || process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID || "",
+    // Note: metaCapiToken is excluded from public fetch for security
+    metaCapiToken: "",
+    metaTestEventCode: doc.metaTestEventCode || "",
+    metaDomainVerification: doc.metaDomainVerification || "",
+    isMetaTrackingEnabled: doc.isMetaTrackingEnabled ?? true,
   };
 }
 
@@ -68,6 +84,55 @@ export async function getStoreSettings(): Promise<SerializedSettings> {
   );
 
   return cachedFn();
+}
+
+/**
+ * Admin-only settings getter including sensitive tokens
+ */
+export async function getAdminStoreSettings(): Promise<SerializedSettings> {
+  await requireAdmin();
+  await ensureDatabaseSeeded();
+  await connectToDatabase();
+
+  const doc = await SettingModel.findOne().lean().exec();
+  if (!doc) return DEFAULT_SETTINGS;
+
+  return {
+    storeName: doc.storeName || DEFAULT_SETTINGS.storeName,
+    tagline: doc.tagline || DEFAULT_SETTINGS.tagline,
+    hotline: doc.hotline || DEFAULT_SETTINGS.hotline,
+    whatsapp: doc.whatsapp || DEFAULT_SETTINGS.whatsapp,
+    email: doc.email || DEFAULT_SETTINGS.email,
+    address: doc.address || DEFAULT_SETTINGS.address,
+    operatingHours: doc.operatingHours || DEFAULT_SETTINGS.operatingHours,
+    shippingDhaka: Number(doc.shippingDhaka ?? 70),
+    shippingOutside: Number(doc.shippingOutside ?? 130),
+    bkashNumber: doc.bkashNumber || DEFAULT_SETTINGS.bkashNumber,
+    facebookUrl: doc.facebookUrl || DEFAULT_SETTINGS.facebookUrl,
+    instagramUrl: doc.instagramUrl || DEFAULT_SETTINGS.instagramUrl,
+    metaPixelId: doc.metaPixelId || process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID || "",
+    metaCapiToken: doc.metaCapiToken || "",
+    metaTestEventCode: doc.metaTestEventCode || "",
+    metaDomainVerification: doc.metaDomainVerification || "",
+    isMetaTrackingEnabled: doc.isMetaTrackingEnabled ?? true,
+  };
+}
+
+/**
+ * Server-only internal accessor for Meta Conversions API
+ */
+export async function getInternalMetaConfig() {
+  await ensureDatabaseSeeded();
+  await connectToDatabase();
+
+  const doc = await SettingModel.findOne().lean().exec();
+  return {
+    pixelId: doc?.metaPixelId || process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID || "",
+    capiToken: doc?.metaCapiToken || process.env.META_CAPI_TOKEN || "",
+    testEventCode: doc?.metaTestEventCode || "",
+    isEnabled: doc?.isMetaTrackingEnabled ?? true,
+    domainVerification: doc?.metaDomainVerification || "",
+  };
 }
 
 export async function updateStoreSettings(input: StoreSettingsInput) {

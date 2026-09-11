@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { trackEvent } from "@/lib/fpixel";
 import {
   Heart,
   ShieldCheck,
@@ -54,6 +55,22 @@ export function ProductDetailClient({
   const [activeTab, setActiveTab] = useState<"desc" | "size" | "delivery" | "reviews">("desc");
 
   const inWishlist = isInWishlist(product.id);
+
+  // Meta Pixel ViewContent tracking
+  useEffect(() => {
+    try {
+      trackEvent("ViewContent", {
+        content_name: product.name,
+        content_category: product.category,
+        content_ids: [product.id],
+        content_type: "product",
+        value: product.salePrice || product.regularPrice,
+        currency: "BDT",
+      });
+    } catch {
+      // Non-blocking
+    }
+  }, [product.id, product.name, product.category, product.salePrice, product.regularPrice]);
 
   // Gallery image list (combining main image and gallery images)
   const images =

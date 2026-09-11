@@ -13,6 +13,11 @@ export interface ISettingDocument extends Document {
   bkashNumber: string;
   facebookUrl: string;
   instagramUrl: string;
+  metaPixelId?: string;
+  metaCapiToken?: string;
+  metaTestEventCode?: string;
+  metaDomainVerification?: string;
+  isMetaTrackingEnabled?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,6 +36,11 @@ const SettingSchema = new Schema<ISettingDocument>(
     bkashNumber: { type: String, default: "01888299388 (Merchant)" },
     facebookUrl: { type: String, default: "https://facebook.com/izhaanlifestyle" },
     instagramUrl: { type: String, default: "https://instagram.com/izhaanlifestyle" },
+    metaPixelId: { type: String, default: "", trim: true },
+    metaCapiToken: { type: String, default: "", trim: true },
+    metaTestEventCode: { type: String, default: "", trim: true },
+    metaDomainVerification: { type: String, default: "", trim: true },
+    isMetaTrackingEnabled: { type: Boolean, default: true },
   },
   {
     timestamps: true,

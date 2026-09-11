@@ -13,8 +13,13 @@ import {
   Save,
   Share2,
   CheckCircle2,
+  Activity,
+  Eye,
+  EyeOff,
+  Radio,
+  ExternalLink,
 } from "lucide-react";
-import { getStoreSettings, updateStoreSettings, SerializedSettings } from "@/actions/settings";
+import { getAdminStoreSettings, updateStoreSettings, SerializedSettings } from "@/actions/settings";
 import { toast } from "sonner";
 
 export default function AdminSettingsPage() {
@@ -31,12 +36,18 @@ export default function AdminSettingsPage() {
     bkashNumber: "01888299388 (Merchant)",
     facebookUrl: "https://facebook.com/izhaanlifestyle",
     instagramUrl: "https://instagram.com/izhaanlifestyle",
+    metaPixelId: "",
+    metaCapiToken: "",
+    metaTestEventCode: "",
+    metaDomainVerification: "",
+    isMetaTrackingEnabled: true,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showToken, setShowToken] = useState(false);
 
   useEffect(() => {
-    getStoreSettings()
+    getAdminStoreSettings()
       .then((data) => {
         setFormData(data);
       })
@@ -250,6 +261,143 @@ export default function AdminSettingsPage() {
                 className="w-full px-3.5 py-2.5 bg-neutral-900 border border-neutral-800 text-white rounded-lg focus:outline-none focus:border-[#c19b65]"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Meta (Facebook & Instagram) Ads & Tracking */}
+        <div className="bg-[#131722] p-5 sm:p-6 rounded-xl border border-neutral-800/80 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-800 pb-3">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-[#1877F2]" />
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                  Meta Ads & Pixel Integration
+                </h3>
+                <p className="text-[11px] text-neutral-400">
+                  Client-side Meta Pixel & Server-Side Conversions API (CAPI) configuration
+                </p>
+              </div>
+            </div>
+
+            {/* Enable/Disable Toggle */}
+            <label className="inline-flex items-center cursor-pointer gap-2.5 bg-neutral-900/90 border border-neutral-800 px-3 py-1.5 rounded-lg">
+              <input
+                type="checkbox"
+                checked={formData.isMetaTrackingEnabled ?? true}
+                onChange={(e) =>
+                  setFormData({ ...formData, isMetaTrackingEnabled: e.target.checked })
+                }
+                className="sr-only peer"
+              />
+              <div className="relative w-8 h-4 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#1877F2]"></div>
+              <span className="text-xs font-semibold text-neutral-300">
+                {formData.isMetaTrackingEnabled ? "Tracking Active" : "Tracking Disabled"}
+              </span>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            {/* Pixel ID */}
+            <div>
+              <label className="block text-neutral-300 font-bold uppercase tracking-wider mb-1">
+                Meta Pixel ID / Dataset ID
+              </label>
+              <input
+                type="text"
+                value={formData.metaPixelId || ""}
+                onChange={(e) => setFormData({ ...formData, metaPixelId: e.target.value })}
+                placeholder="e.g. 182736459012345"
+                className="w-full px-3.5 py-2.5 bg-neutral-900 border border-neutral-800 text-white rounded-lg focus:outline-none focus:border-[#1877F2] font-mono"
+              />
+              <p className="text-[10px] text-neutral-500 mt-1">
+                Found in Meta Events Manager &rarr; Settings &rarr; Pixel ID.
+              </p>
+            </div>
+
+            {/* Test Event Code */}
+            <div>
+              <label className="block text-neutral-300 font-bold uppercase tracking-wider mb-1">
+                Test Event Code (Optional)
+              </label>
+              <input
+                type="text"
+                value={formData.metaTestEventCode || ""}
+                onChange={(e) => setFormData({ ...formData, metaTestEventCode: e.target.value })}
+                placeholder="e.g. TEST12345 (Leave empty in production)"
+                className="w-full px-3.5 py-2.5 bg-neutral-900 border border-neutral-800 text-white rounded-lg focus:outline-none focus:border-[#1877F2] font-mono"
+              />
+              <p className="text-[10px] text-neutral-500 mt-1">
+                Use only when verifying events in Meta "Test Events" tab.
+              </p>
+            </div>
+
+            {/* Conversions API Access Token */}
+            <div className="sm:col-span-2">
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-neutral-300 font-bold uppercase tracking-wider">
+                  Conversions API (CAPI) Access Token
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowToken(!showToken)}
+                  className="text-neutral-400 hover:text-white flex items-center gap-1 text-[11px]"
+                >
+                  {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  <span>{showToken ? "Hide" : "Show"}</span>
+                </button>
+              </div>
+              <input
+                type={showToken ? "text" : "password"}
+                value={formData.metaCapiToken || ""}
+                onChange={(e) => setFormData({ ...formData, metaCapiToken: e.target.value })}
+                placeholder="EAAGm0PX4ZC8... (Generate in Events Manager -> Settings -> Conversions API)"
+                className="w-full px-3.5 py-2.5 bg-neutral-900 border border-neutral-800 text-white rounded-lg focus:outline-none focus:border-[#1877F2] font-mono text-xs"
+              />
+              <p className="text-[10px] text-neutral-500 mt-1">
+                Stored safely on the server. Never exposed to website visitors. Bypasses ad-blockers and iOS 14.5 restrictions.
+              </p>
+            </div>
+
+            {/* Meta Domain Verification */}
+            <div className="sm:col-span-2">
+              <label className="block text-neutral-300 font-bold uppercase tracking-wider mb-1">
+                Meta Domain Verification Code (Meta-tag content)
+              </label>
+              <input
+                type="text"
+                value={formData.metaDomainVerification || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, metaDomainVerification: e.target.value })
+                }
+                placeholder='e.g. 1a2b3c4d5e6f... (The content value from <meta name="facebook-domain-verification" content="..." />)'
+                className="w-full px-3.5 py-2.5 bg-neutral-900 border border-neutral-800 text-white rounded-lg focus:outline-none focus:border-[#1877F2] font-mono text-xs"
+              />
+              <p className="text-[10px] text-neutral-500 mt-1">
+                Used to verify domain ownership in Meta Business Settings &rarr; Brand Safety &rarr; Domains.
+              </p>
+            </div>
+          </div>
+
+          {/* Dynamic Catalog Feed Info Banner */}
+          <div className="p-3 bg-neutral-900/60 rounded-lg border border-neutral-800 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 text-neutral-300">
+              <Radio className="w-4 h-4 text-emerald-400" />
+              <span>
+                Meta Catalog RSS/XML Feed:{" "}
+                <code className="bg-black/50 text-[#c19b65] px-1.5 py-0.5 rounded font-mono">
+                  /api/catalog/feed.xml
+                </code>
+              </span>
+            </div>
+            <a
+              href="/api/catalog/feed.xml"
+              target="_blank"
+              rel="noreferrer"
+              className="text-neutral-400 hover:text-white inline-flex items-center gap-1 text-[11px] underline"
+            >
+              <span>View Feed</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
         </div>
 

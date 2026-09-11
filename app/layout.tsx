@@ -4,6 +4,8 @@ import { Toaster } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/JsonLd";
 import { Analytics } from "@/components/Analytics";
+import { MetaPixel } from "@/components/MetaPixel";
+import { getStoreSettings } from "@/actions/settings";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -38,10 +40,10 @@ export const metadata: Metadata = {
       "Izhaan Lifestyle - Premium Panjabi collection in Bangladesh. Best quality, reasonable price, and nationwide Cash on Delivery.",
     images: [
       {
-        url: "https://izhaanlifestyle.com/favicon.png",
-        width: 150,
-        height: 150,
-        alt: "Izhaan Lifestyle",
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Izhaan Luxury Menswear | Premium Panjabi Collection",
       },
     ],
   },
@@ -50,15 +52,24 @@ export const metadata: Metadata = {
     title: "Izhaan | Wear the heritage. Own the trend. – Panjabi",
     description:
       "Izhaan Lifestyle - Premium Panjabi collection in Bangladesh. Best quality, reasonable price, and nationwide Cash on Delivery.",
-    images: ["https://izhaanlifestyle.com/favicon.png"],
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Izhaan Luxury Menswear",
+      },
+    ],
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const settings = await getStoreSettings().catch(() => null);
+
   return (
     <html
       lang="bn"
@@ -69,10 +80,20 @@ export default function RootLayout({
       <head>
         <OrganizationJsonLd />
         <WebSiteJsonLd />
+        {settings?.metaDomainVerification && (
+          <meta
+            name="facebook-domain-verification"
+            content={settings.metaDomainVerification}
+          />
+        )}
       </head>
       <body suppressHydrationWarning className="min-h-full flex flex-col bg-white text-neutral-900">
         <AppShell>{children}</AppShell>
         <Analytics />
+        <MetaPixel
+          pixelId={settings?.metaPixelId}
+          isEnabled={settings?.isMetaTrackingEnabled}
+        />
         <Toaster richColors position="top-right" />
       </body>
     </html>
