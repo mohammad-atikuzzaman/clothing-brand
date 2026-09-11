@@ -102,7 +102,7 @@ export default function ContactUsPage() {
       {/* Full-width Google Maps Section (Matching reference site) */}
       <div className="relative w-full bg-neutral-100 border-b border-neutral-200">
         <iframe
-          src="https://maps.google.com/maps?q=Izhaan%2C%20Dhaka%2C%20Bangladesh&t=&z=13&ie=UTF8&iwloc=&output=embed"
+          src="https://maps.google.com/maps?q=Banani%20Road%2011%2C%20Dhaka%2C%20Bangladesh&t=&z=14&ie=UTF8&iwloc=&output=embed"
           width="100%"
           height="450"
           style={{ border: 0 }}
@@ -122,15 +122,15 @@ export default function ContactUsPage() {
             <div className="font-bold tracking-wider uppercase text-neutral-100 flex items-center gap-1.5">
               <span>Izhaan Lifestyle</span>
               <span className="text-[9px] px-1.5 py-0.5 bg-[#c19b65] text-black font-semibold rounded-xs">
-                Dhaka
+                Banani, Dhaka
               </span>
             </div>
             <div className="text-[11px] text-neutral-400">
-              Uttara / Dakshinkhan, Dhaka, Bangladesh
+              Road 11, Banani, Dhaka-1213, Bangladesh
             </div>
           </div>
           <a
-            href="https://maps.google.com/?q=Izhaan+Dhaka+Bangladesh"
+            href="https://maps.google.com/?q=Road+11+Banani+Dhaka+Bangladesh"
             target="_blank"
             rel="noopener noreferrer"
             className="ml-2 px-2.5 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-[#c19b65] rounded-xs text-[11px] font-semibold flex items-center gap-1 transition-colors"
