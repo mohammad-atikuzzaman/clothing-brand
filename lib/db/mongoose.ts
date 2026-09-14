@@ -1,6 +1,14 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/clothing_brand";
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  throw new Error(
+    "Please define the MONGODB_URI environment variable inside .env.local"
+  );
+}
+
+const uri: string = MONGODB_URI;
 
 interface MongooseCache {
   conn: typeof mongoose | null;
@@ -34,7 +42,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
       socketTimeoutMS: 45000,
     };
 
-    cached!.promise = mongoose.connect(MONGODB_URI, opts).then((m) => {
+    cached!.promise = mongoose.connect(uri, opts).then((m) => {
       return m;
     });
   }

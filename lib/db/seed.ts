@@ -16,24 +16,31 @@ export async function ensureDatabaseSeeded() {
     // 1. Seed initial admin user if no admin exists
     const adminCount = await UserModel.countDocuments({ role: "admin" });
     if (adminCount === 0) {
-      console.log("Seeding default administrative account...");
-      const adminEmail = process.env.INITIAL_ADMIN_EMAIL || "admin@izhaan.com";
-      const adminPassword = process.env.INITIAL_ADMIN_PASSWORD || "Admin@Izhaan2026!";
-      const hashedPassword = await bcrypt.hash(adminPassword, 12);
+      const adminEmail = process.env.INITIAL_ADMIN_EMAIL;
+      const adminPassword = process.env.INITIAL_ADMIN_PASSWORD;
 
-      await UserModel.findOneAndUpdate(
-        { email: adminEmail },
-        {
-          name: "Izhaan Super Admin",
-          email: adminEmail,
-          password: hashedPassword,
-          role: "admin",
-          phone: "+880 1888-299388",
-          isBanned: false,
-        },
-        { upsert: true, new: true }
-      );
-      console.log(`Successfully initialized admin account: ${adminEmail}`);
+      if (!adminEmail || !adminPassword) {
+        console.warn(
+          "⚠️ WARNING: INITIAL_ADMIN_EMAIL or INITIAL_ADMIN_PASSWORD is not set. Skipping initial admin seeding."
+        );
+      } else {
+        console.log("Seeding default administrative account...");
+        const hashedPassword = await bcrypt.hash(adminPassword, 12);
+
+        await UserModel.findOneAndUpdate(
+          { email: adminEmail },
+          {
+            name: "Izhaan Super Admin",
+            email: adminEmail,
+            password: hashedPassword,
+            role: "admin",
+            phone: "+880 1888-299388",
+            isBanned: false,
+          },
+          { upsert: true, new: true }
+        );
+        console.log(`Successfully initialized admin account: ${adminEmail}`);
+      }
     }
 
     const productCount = await ProductModel.countDocuments();

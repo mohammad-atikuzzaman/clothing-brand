@@ -2,27 +2,46 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import fs from "fs";
 
-// Load .env.local manually
-try {
-  const envContent = fs.readFileSync(".env.local", "utf8");
-  envContent.split("\n").forEach((line) => {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith("#")) {
-      const idx = trimmed.indexOf("=");
-      if (idx !== -1) {
-        const key = trimmed.substring(0, idx).trim();
-        const val = trimmed.substring(idx + 1).trim();
-        if (!process.env[key]) process.env[key] = val;
+// Load .env.local safely
+for (const envFile of [".env.local", ".env"]) {
+  if (fs.existsSync(envFile)) {
+    try {
+      if (typeof process.loadEnvFile === "function") {
+        process.loadEnvFile(envFile);
+      } else {
+        const envContent = fs.readFileSync(envFile, "utf8");
+        envContent.split("\n").forEach((line) => {
+          const trimmed = line.trim();
+          if (trimmed && !trimmed.startsWith("#")) {
+            const idx = trimmed.indexOf("=");
+            if (idx !== -1) {
+              const key = trimmed.substring(0, idx).trim();
+              const val = trimmed.substring(idx + 1).trim();
+              if (!process.env[key]) process.env[key] = val;
+            }
+          }
+        });
       }
+      break;
+    } catch {
+      // ignore
     }
-  });
-} catch (e) {
-  console.log("Could not read .env.local, using defaults");
+  }
 }
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/clothing_brand";
-const adminEmail = process.env.INITIAL_ADMIN_EMAIL || "admin@izhaan.com";
-const adminPassword = process.env.INITIAL_ADMIN_PASSWORD || "Admin@Izhaan2026!";
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+  console.error("❌ ERROR: MONGODB_URI is not set in environment variables or .env.local!");
+  process.exit(1);
+}
+
+const adminEmail = process.env.INITIAL_ADMIN_EMAIL;
+const adminPassword = process.env.INITIAL_ADMIN_PASSWORD;
+
+if (!adminEmail || !adminPassword) {
+  console.error("❌ ERROR: Both INITIAL_ADMIN_EMAIL and INITIAL_ADMIN_PASSWORD must be defined in .env.local!");
+  process.exit(1);
+}
 
 async function run() {
   console.log("Connecting to MongoDB at", MONGODB_URI);

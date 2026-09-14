@@ -15,27 +15,33 @@ for (const envFile of [".env.local", ".env"]) {
 
 const { MongoClient } = mongoose.mongo;
 
-const LOCAL_URI = process.env.LOCAL_MONGODB_URI || "mongodb://127.0.0.1:27017";
-const LOCAL_DB_NAME = process.env.LOCAL_DB_NAME || "clothing_brand";
+const LOCAL_URI = process.env.LOCAL_MONGODB_URI;
+const LOCAL_DB_NAME = process.env.LOCAL_DB_NAME;
 
 const ATLAS_URI = process.env.ATLAS_URI || process.env.MONGODB_URI;
-if (!ATLAS_URI) {
-  console.error("❌ ERROR: Neither ATLAS_URI nor MONGODB_URI is set in environment variables or .env.local!");
-  process.exit(1);
-}
 
-// Extract database name from URI if present, or fallback to environment variable
-const extractDbName = (uri, fallback) => {
+// Extract database name from URI if present
+const extractDbName = (uri) => {
   try {
     const parsed = new URL(uri);
     const db = parsed.pathname.replace(/^\//, "").split("?")[0];
-    return db || fallback;
+    return db || "";
   } catch {
-    return fallback;
+    return "";
   }
 };
 
-const ATLAS_DB_NAME = process.env.ATLAS_DB_NAME || extractDbName(ATLAS_URI, "izhaan");
+const ATLAS_DB_NAME = process.env.ATLAS_DB_NAME || (ATLAS_URI ? extractDbName(ATLAS_URI) : "");
+
+if (!LOCAL_URI || !LOCAL_DB_NAME) {
+  console.error("❌ ERROR: Both LOCAL_MONGODB_URI and LOCAL_DB_NAME must be set in .env.local or environment variables!");
+  process.exit(1);
+}
+
+if (!ATLAS_URI || !ATLAS_DB_NAME) {
+  console.error("❌ ERROR: ATLAS_URI (or MONGODB_URI) and ATLAS_DB_NAME must be set in .env.local or environment variables!");
+  process.exit(1);
+}
 
 async function migrate() {
   console.log("=== MongoDB Migration: Local -> Atlas ===");
