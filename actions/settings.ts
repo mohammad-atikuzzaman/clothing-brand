@@ -67,7 +67,7 @@ async function fetchSettingsFromDb(): Promise<SerializedSettings> {
     bkashNumber: doc.bkashNumber || DEFAULT_SETTINGS.bkashNumber,
     facebookUrl: doc.facebookUrl || DEFAULT_SETTINGS.facebookUrl,
     instagramUrl: doc.instagramUrl || DEFAULT_SETTINGS.instagramUrl,
-    metaPixelId: doc.metaPixelId || process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID || "",
+    metaPixelId: doc.metaPixelId || "",
     // Note: metaCapiToken is excluded from public fetch for security
     metaCapiToken: "",
     metaTestEventCode: doc.metaTestEventCode || "",
@@ -110,7 +110,7 @@ export async function getAdminStoreSettings(): Promise<SerializedSettings> {
     bkashNumber: doc.bkashNumber || DEFAULT_SETTINGS.bkashNumber,
     facebookUrl: doc.facebookUrl || DEFAULT_SETTINGS.facebookUrl,
     instagramUrl: doc.instagramUrl || DEFAULT_SETTINGS.instagramUrl,
-    metaPixelId: doc.metaPixelId || process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID || "",
+    metaPixelId: doc.metaPixelId || "",
     metaCapiToken: doc.metaCapiToken || "",
     metaTestEventCode: doc.metaTestEventCode || "",
     metaDomainVerification: doc.metaDomainVerification || "",
@@ -127,8 +127,8 @@ export async function getInternalMetaConfig() {
 
   const doc = await SettingModel.findOne().lean().exec();
   return {
-    pixelId: doc?.metaPixelId || process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID || "",
-    capiToken: doc?.metaCapiToken || process.env.META_CAPI_TOKEN || "",
+    pixelId: doc?.metaPixelId || "",
+    capiToken: doc?.metaCapiToken || "",
     testEventCode: doc?.metaTestEventCode || "",
     isEnabled: doc?.isMetaTrackingEnabled ?? true,
     domainVerification: doc?.metaDomainVerification || "",
